@@ -20,11 +20,13 @@ const authSource = 'admin';
 const replicaSet = 'rs0';
 
 console.log(
-    'Host', process.env.DATABASE_HOST,
-    'Port', process.env.DATABASE_PORT,
-    'User', process.env.DATABASE_USER,
-    'Password', process.env.DATABASE_PASSWORD,
-    'Database', process.env.DATABASE_NAME
+    '\n - Host', process.env.DATABASE_HOST,
+    '\n - Port', process.env.DATABASE_PORT,
+    '\n - User', process.env.DATABASE_USER,
+    '\n - Password', process.env.DATABASE_PASSWORD,
+    '\n - Database', process.env.DATABASE_NAME,
+    '\n - Auth', authSource,
+    '\n - Replica Set', replicaSet,
 );
 
 // create db connection
