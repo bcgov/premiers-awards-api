@@ -17,8 +17,16 @@ const databasePassword = process.env.DATABASE_PASSWORD;
 // const databaseConnectionOpts = process.env.DATABASE_CONNECTION_OPTIONS;
 const databaseName = process.env.DATABASE_NAME;
 
+console.log(
+    'Host', process.env.DATABASE_HOST,
+    'Port', process.env.DATABASE_PORT,
+    'User', process.env.DATABASE_USER,
+    'Password', process.env.DATABASE_PASSWORD,
+    'Database', process.env.DATABASE_NAME
+);
+
 // create db connection
-mongoose.connect(`${protocol}${databaseHost}:${databasePort}/${databaseName}`, {
+mongoose.connect(`${protocol}${databaseHost}:${databasePort}/${databaseName}&directConnection=true`, {
   auth: {
     username: databaseUser,
     password: databasePassword
