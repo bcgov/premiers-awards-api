@@ -18,24 +18,17 @@ const databasePassword = process.env.DATABASE_PASSWORD;
 const databaseName = process.env.DATABASE_NAME;
 const authSource = 'admin';
 const replicaSet = 'rs0';
+// const connectionURL = `${protocol}${databaseHost}:${databasePort}/${databaseName}`;
+const connectionURL = `${protocol}${databaseHost}:${databasePort}/${databaseName}`;
 
-console.log(
-    '\n - Host', process.env.DATABASE_HOST,
-    '\n - Port', process.env.DATABASE_PORT,
-    '\n - User', process.env.DATABASE_USER,
-    '\n - Password', process.env.DATABASE_PASSWORD,
-    '\n - Database', process.env.DATABASE_NAME,
-    '\n - Auth', authSource,
-    '\n - Replica Set', replicaSet,
-);
+console.log(`${protocol}${databaseHost}:${databasePort}/${databaseName}`);
 
 // create db connection
-mongoose.connect(`${protocol}${databaseHost}:${databasePort}/${databaseName}`, {
+mongoose.connect(connectionURL, {
   auth: {
     username: databaseUser,
     password: databasePassword
   },
-  replicaSet: replicaSet,
   authSource: authSource,
   useUnifiedTopology: true,
   useNewUrlParser: true
