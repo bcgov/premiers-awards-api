@@ -30,7 +30,7 @@ mongoose.connect(connectionURL, {
     password: databasePassword
   },
   directConnection: true,
-  authSource: authSource,
+  authSource: databaseName,
   useUnifiedTopology: true,
   useNewUrlParser: true
 }, (err)=>{ if (err) console.error(err); });
