@@ -29,6 +29,7 @@ mongoose.connect(connectionURL, {
     username: databaseUser,
     password: databasePassword
   },
+  directConnection: true,
   authSource: authSource,
   useUnifiedTopology: true,
   useNewUrlParser: true
