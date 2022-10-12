@@ -26,12 +26,12 @@ console.log(
 );
 
 // create db connection
-mongoose.connect(`${protocol}${databaseHost}:${databasePort}/${databaseName}&directConnection=true`, {
+mongoose.connect(`${protocol}${databaseHost}:${databasePort}/${databaseName}`, {
   auth: {
     username: databaseUser,
     password: databasePassword
   },
-  authSource: process.env.DATABASE_AUTH,
+  authSource: process.env.DATABASE_AUTH || 'admin',
   useUnifiedTopology: true,
   useNewUrlParser: true
 }, (err)=>{ if (err) console.error(err); });
