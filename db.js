@@ -16,6 +16,8 @@ const databaseUser = process.env.DATABASE_USER;
 const databasePassword = process.env.DATABASE_PASSWORD;
 // const databaseConnectionOpts = process.env.DATABASE_CONNECTION_OPTIONS;
 const databaseName = process.env.DATABASE_NAME;
+const authSource = 'admin';
+const replicaSet = 'rs0';
 
 console.log(
     'Host', process.env.DATABASE_HOST,
@@ -31,7 +33,8 @@ mongoose.connect(`${protocol}${databaseHost}:${databasePort}/${databaseName}`, {
     username: databaseUser,
     password: databasePassword
   },
-  authSource: process.env.DATABASE_AUTH || 'admin',
+  replicaSet: replicaSet,
+  authSource: authSource,
   useUnifiedTopology: true,
   useNewUrlParser: true
 }, (err)=>{ if (err) console.error(err); });
