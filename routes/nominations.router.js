@@ -1,13 +1,13 @@
 /*!
  * Nominations controller
- * File: nominations.controller.js
+ * File: entries.nominations.controller.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
 
 const express = require('express');
 const router = express.Router();
-const dataController = require('../controllers/data.nominations.controller');
+const dataController = require('../controllers/entries.nominations.controller');
 const attachmentController = require("../controllers/attachments.nominations.controller");
 const {authorizeData, authorizeUser, authorizeAdmin, authorizeAttachment} = require('../services/auth.services')
 const {uploader} = require("../services/files.services");

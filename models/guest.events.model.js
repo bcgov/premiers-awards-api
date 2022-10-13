@@ -1,6 +1,6 @@
 /*!
- * Guest db model
- * File: guest.model.js
+ * Events: Guest model
+ * File: guest.events.model.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
@@ -45,6 +45,10 @@ const GuestSchema = new Schema(
     dietary: {
       type: Array,
     },
+    table: {
+      type: Schema.Types.ObjectId,
+      ref: "Table",
+    },
     notes: {
       type: String,
     },
@@ -52,5 +56,5 @@ const GuestSchema = new Schema(
   { timestamps: true }
 );
 
-const GuestModel = mongoose.model("Guest", GuestSchema, "guests");
-module.exports = GuestModel;
+const GuestEventsModel = mongoose.model("Guest", GuestSchema, "guests");
+module.exports = GuestEventsModel;

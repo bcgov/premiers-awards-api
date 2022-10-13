@@ -1,11 +1,11 @@
 /*!
- * Global settings controller
+ * Admin: Global settings controller
  * File: settings.admin.controller.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
 
-const SettingsModel = require('../models/settings.model')
+const SettingsModel = require('../models/settings.admin.model')
 
 /**
  * Get global settings.

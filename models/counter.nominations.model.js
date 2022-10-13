@@ -1,6 +1,6 @@
 /*!
- * Auto-increment counter db model
- * File: counter.model.js
+ * Nominations: Auto-increment counter
+ * File: counter.nominations.model.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
@@ -16,6 +16,6 @@ const CounterSchema = new Schema({
   _id: {type: String, required: true},
   seq: { type: Number, default: 0 }
 });
-const CounterModel = mongoose.model('Counter', CounterSchema, 'counters');
+const CounterNominationsModel = mongoose.model('Counter', CounterSchema, 'counters');
 
-module.exports = CounterModel;
+module.exports = CounterNominationsModel;

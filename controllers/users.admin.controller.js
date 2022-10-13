@@ -1,11 +1,11 @@
 /*!
  * User controller
- * File: user.admin.controller.js
+ * File: users.admin.controller.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
 
-const UserModel = require('../models/user.model');
+const UserModel = require('../models/user.admin.model');
 const auth = require('../services/auth.services');
 const opts = {runValidators: true };
 

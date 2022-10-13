@@ -14,14 +14,18 @@ const databaseHost = process.env.DATABASE_HOST;
 const databasePort = process.env.DATABASE_PORT;
 const databaseUser = process.env.DATABASE_USER;
 const databasePassword = process.env.DATABASE_PASSWORD;
+const authSource = process.env.DATABASE_AUTH || databaseHost
 // const databaseConnectionOpts = process.env.DATABASE_CONNECTION_OPTIONS;
 const databaseName = process.env.DATABASE_NAME;
-const authSource = 'admin';
-const replicaSet = 'rs0';
-// const connectionURL = `${protocol}${databaseHost}:${databasePort}/${databaseName}`;
 const connectionURL = `${protocol}${databaseHost}:${databasePort}/${databaseName}`;
 
-console.log(`${protocol}${databaseHost}:${databasePort}/${databaseName}`);
+// DEBUG db connection URL
+if (process.env.DEBUG) {
+  console.log('\n\n=== DEBUG ===')
+  console.log(`Connection URL:\t\t${connectionURL}`);
+  console.log(`\t- User:\t\t${databaseUser}\n\t- Password:\t${databasePassword}`);
+  console.log('=== \n\n')
+}
 
 // create db connection
 mongoose.connect(connectionURL, {
@@ -30,7 +34,7 @@ mongoose.connect(connectionURL, {
     password: databasePassword
   },
   directConnection: true,
-  authSource: databaseName,
+  authSource: authSource,
   useUnifiedTopology: true,
   useNewUrlParser: true
 }, (err)=>{ if (err) console.error(err); });
@@ -42,5 +46,10 @@ mongoose.connect(connectionURL, {
 
 // Connect to MongoDB
 mongoose.connection.on('connected', () => {
-  console.log('\nConnected to MongoDB @ 27017\n\n*\t*\t*');
+  console.log(`Connected to MongoDB on port ${databasePort}.`);
+  console.log(`\t- Host: ${databaseHost}`);
+  console.log(`\t- Database: ${databaseName}`);
+  console.log(`\t- Auth: ${authSource}`);
+  console.log(`\t- User: ${databaseUser}`);
+  console.log(`============================================`);
 });

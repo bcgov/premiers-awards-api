@@ -1,6 +1,6 @@
 /*!
- * Nomination data db model
- * File: nomination.model.js
+ * Nominations: Nomination entry model
+ * File: entry.nominations.model.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
@@ -119,5 +119,5 @@ const NominationSchema = new Schema(
     { timestamps: true }
 );
 
-const NominationModel = mongoose.model('Nomination', NominationSchema, 'nominations');
-module.exports = NominationModel;
+const EntryNominationsModel = mongoose.model('Nomination', NominationSchema, 'nominations');
+module.exports = EntryNominationsModel;

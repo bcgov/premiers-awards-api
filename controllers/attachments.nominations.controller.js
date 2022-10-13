@@ -1,12 +1,12 @@
 /*!
- * Nomination attachments controller
+ * Nominations: File attachments controller
  * File: attachments.nominations.controller.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
 
-const AttachmentModel = require('../models/attachment.model');
-const NominationModel = require('../models/nomination.model');
+const AttachmentModel = require('../models/attachment.nominations.model');
+const NominationModel = require('../models/entry.nominations.model');
 const {deleteFile} = require('../services/files.services')
 
 /**

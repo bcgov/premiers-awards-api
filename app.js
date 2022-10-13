@@ -48,7 +48,7 @@ const indexRouter = require("./router");
 const apiRouters = [
     {path: '/admin', router: require("./routes/admin.router")},
     {path: '/nominations', router: require("./routes/nominations.router")},
-    {path: '/tables', router: require("./routes/tables.router")}
+    {path: '/tables', router: require("./routes/events.router")}
 ];
 
 // configure frontend applications

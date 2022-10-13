@@ -1,6 +1,6 @@
 /*!
- * User db model
- * File: user.model.js
+ * Admin: User model
+ * File: user.admin.model.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
@@ -40,5 +40,5 @@ const UserSchema = new Schema({
   },
   { timestamps: true });
 
-const UserModel = mongoose.model('User', UserSchema, 'users');
-module.exports = UserModel;
+const UserAdminModel = mongoose.model('User', UserSchema, 'users');
+module.exports = UserAdminModel;

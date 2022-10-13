@@ -1,14 +1,14 @@
 /*!
- * User controller
- * File: user.admin.controller.js
+ * Events: Event registration controller
+ * File: registration.events.controller.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
 
 const { default: mongoose } = require("mongoose");
 const { genID } = require("../services/validation.services.js");
-const GuestModel = require("../models/guest.model.js");
-const RegistrationModel = require("../models/registration.model.js");
+const GuestModel = require("../models/guest.events.model.js");
+const RegistrationModel = require("../models/registration.events.model.js");
 
 /**
  * Retrieve all registration data.

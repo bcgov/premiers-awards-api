@@ -1,6 +1,6 @@
 /*!
- * Nomination attachment db model
- * File: attachment.model.js
+ * Nominations: File attachment model
+ * File: attachment.nominations.model.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
@@ -24,6 +24,6 @@ const AttachmentSchema = new Schema({
   { timestamps: true }
 );
 
-const AttachmentModel = mongoose.model('Attachment', AttachmentSchema, 'attachments');
+const AttachmentNominationsModel = mongoose.model('Attachment', AttachmentSchema, 'attachments');
 
-module.exports = AttachmentModel;
+module.exports = AttachmentNominationsModel;

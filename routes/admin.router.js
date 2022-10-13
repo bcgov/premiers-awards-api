@@ -7,7 +7,7 @@
 
 const express = require('express');
 const router = express.Router();
-const authController = require('../controllers/user.admin.controller');
+const authController = require('../controllers/users.admin.controller');
 const {authorizeAdmin, authorizeSuperAdmin, authorizeData} = require('../services/auth.services')
 const settingsController = require("../controllers/settings.admin.controller");
 

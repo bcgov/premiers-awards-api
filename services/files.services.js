@@ -10,7 +10,7 @@ const { promises: Fs } = require('fs');
 const path = require('path');
 const AdmZip = require("adm-zip");
 const multer = require('multer');
-const AttachmentModel = require("../models/attachment.model");
+const AttachmentModel = require("../models/attachment.nominations.model");
 
 const dataPath = process.env.DATA_PATH
 const maxUploads = 5;

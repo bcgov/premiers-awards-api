@@ -1,6 +1,6 @@
 /*!
- * Global settings db model
- * File: settings.model.js
+ * Admin: Global settings
+ * File: settings.admin.model.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
@@ -24,6 +24,6 @@ const SettingsSchema = new Schema({
   },
 });
 
-const SettingsModel = mongoose.model('Setting', SettingsSchema, 'settings');
+const SettingsAdminModel = mongoose.model('Setting', SettingsSchema, 'settings');
 
-module.exports = SettingsModel;
+module.exports = SettingsAdminModel;

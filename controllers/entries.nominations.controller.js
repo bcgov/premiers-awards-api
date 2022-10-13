@@ -1,13 +1,13 @@
 /*!
- * Nomination data controller
- * File: data.nominations.controller.js
+ * Nominations: Nomination entry controller
+ * File: entries.nominations.controller.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
 
-const NominationModel = require('../models/nomination.model');
-const AttachmentModel = require('../models/attachment.model');
-const counter = require('../models/counter.model');
+const NominationModel = require('../models/entry.nominations.model');
+const AttachmentModel = require('../models/attachment.nominations.model');
+const counter = require('../models/counter.nominations.model');
 const { fileExists, createZIP, createCSV, createZIPPackage} = require('../services/files.services');
 const { generateNominationPDF } = require('../services/pdf.services');
 const { Readable } = require('stream');

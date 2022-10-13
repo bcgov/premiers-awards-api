@@ -1,6 +1,6 @@
 /*!
- * Registration db model
- * File: registration.model.js
+ * Events: Registration model
+ * File: registration.events.model.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
@@ -59,13 +59,17 @@ const RegistrationSchema = new Schema(
     submitted: {
       type: Boolean,
     },
+    table: {
+      type: Schema.Types.ObjectId,
+      ref: "Table",
+    },
   },
   { timestamps: true }
 );
 
-const RegistrationModel = mongoose.model(
+const RegistrationEventsModel = mongoose.model(
   "Registration",
   RegistrationSchema,
   "registrations"
 );
-module.exports = RegistrationModel;
+module.exports = RegistrationEventsModel;
