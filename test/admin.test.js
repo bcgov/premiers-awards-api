@@ -1,11 +1,11 @@
 /*!
- * API tests
- * File: test.js
+ * API test
+ * File: admin.test.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
 
-const {api} = require('./app.js');
+const {api} = require('../app.js');
 const supertest = require('supertest');
 
 // test('the data is peanut butter', async () => {
