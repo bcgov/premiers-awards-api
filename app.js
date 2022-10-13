@@ -13,7 +13,7 @@ const cors = require("cors");
 require('dotenv').config();
 
 // logging
-const { logger, errorLogger, requestLogger} = require("./logger");
+const { requestLogger} = require("./logger");
 
 // Database
 require("./db");
@@ -111,14 +111,18 @@ api.use(cookieParser(process.env.COOKIE_SECRET));
 // sanitize db keys to prevent injection
 api.use(mongoSanitize());
 
-// authenticate user for all routes
-api.all("*", authenticate);
-
 // log requests
 api.use(requestLogger);
 
 // initialize routers for API requests
+
+// liveliness route (no authentication)
 api.use('/', indexRouter);
+
+// authenticate user for all other routes
+api.all("*", authenticate);
+
+// all other routes
 apiRouters.forEach(apiRouter => {
     indexRouter.use(apiRouter.path, apiRouter.router);
 });

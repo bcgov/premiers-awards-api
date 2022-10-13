@@ -32,7 +32,7 @@ const superadminUser = process.env.SUPER_ADMIN_USER;
 
 exports.authenticate = async (req, res, next) => {
   try {
-    // [dev] skip authentication if testing on local development
+    // [dev] skip authentication on test/local environments
     if (nodeEnv === 'local' || nodeEnv === 'test') {
       res.locals.user = await UserModel.findOne({guid: superadminGUID})
           || {guid: superadminGUID, username: superadminUser};
@@ -294,6 +294,5 @@ const initUsers = async() => {
     console.log(`[${nodeEnv}] Default super-administrator initialized.`);
   }
 }
-if (process.env.NODE_ENV !== 'test')
-  initUsers().catch((err) => new Error(err));
+if (process.env.NODE_ENV !== 'test') initUsers().catch((err) => new Error(err));
 
