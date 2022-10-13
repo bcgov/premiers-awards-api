@@ -14,9 +14,9 @@ const databaseHost = process.env.DATABASE_HOST;
 const databasePort = process.env.DATABASE_PORT;
 const databaseUser = process.env.DATABASE_USER;
 const databasePassword = process.env.DATABASE_PASSWORD;
-const authSource = process.env.DATABASE_AUTH || databaseHost
 // const databaseConnectionOpts = process.env.DATABASE_CONNECTION_OPTIONS;
 const databaseName = process.env.DATABASE_NAME;
+const authSource = process.env.DATABASE_AUTH || databaseName
 const connectionURL = `${protocol}${databaseHost}:${databasePort}/${databaseName}`;
 
 // DEBUG db connection URL
