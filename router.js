@@ -12,7 +12,7 @@ const router = express.Router()
  * Main API router
  */
 
-router.get('/', function (req, res) {
+router.get('/', function (req, res, next) {
   res.json('API is running.');
 });
 module.exports = router;

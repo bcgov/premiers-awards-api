@@ -1,17 +1,23 @@
 /*!
- * Authentication services
+ * User authentication/authorization services
  * File: auth.services.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
 
-const axios = require("axios");
-const UserModel = require("../models/user.admin.model");
-const NominationModel = require("../models/entry.nominations.model");
-const AttachmentModel = require("../models/attachment.nominations.model");
-const { validateEmail } = require("./validation.services");
+const axios = require('axios');
+const UserModel = require('../models/user.admin.model');
+const NominationModel = require('../models/entry.nominations.model');
+const AttachmentModel = require('../models/attachment.nominations.model');
+const {validateEmail} = require('./validation.services');
+require('dotenv').config();
 
-"use strict";
+const nodeEnv = process.env.NODE_ENV;
+const baseURL = process.env.APP_BASE_URL;
+const superadminGUID = process.env.SUPER_ADMIN_GUID;
+const superadminUser = process.env.SUPER_ADMIN_USER;
+
+'use strict';
 
 /**
  * Authenticate user based on IDIR credentials.
@@ -26,69 +32,54 @@ const { validateEmail } = require("./validation.services");
 
 exports.authenticate = async (req, res, next) => {
   try {
-    // skip authentication if testing on local development
-    if (process.env.NODE_ENV === "local") {
-      res.locals.user = (await UserModel.findOne({
-        guid: process.env.TEST_ADMIN_GUID,
-      })) || {
-        guid: process.env.TEST_ADMIN_GUID,
-        username: process.env.TEST_ADMIN_ID,
-      };
-      console.log("Authenticating test user", res.locals.user);
+    // [dev] skip authentication if testing on local development
+    if (nodeEnv === 'local' || nodeEnv === 'test') {
+      res.locals.user = await UserModel.findOne({guid: superadminGUID})
+          || {guid: superadminGUID, username: superadminUser};
+      // check that test admin user has been initialized
+      if ( !superadminGUID || !superadminUser || !res.locals.user) return next(new Error('noTestInit'));
       return next();
     }
 
-    // get current user data (if authenticated)
-    const { session = null, SMSESSION = "" } = req.cookies || {};
+    // [prod] get current user data (if authenticated)
+    const {session = null, SMSESSION=''} = req.cookies || {};
     let date = new Date();
     const expDays = 1;
-    date.setTime(date.getTime() + expDays * 24 * 60 * 60 * 1000);
+    date.setTime(date.getTime() + (expDays * 24 * 60 * 60 * 1000));
     const expires = "expires=" + date.toUTCString();
-    const SMSCookie =
-        "SMSESSION=" +
-        SMSESSION +
-        "; " +
-        expires +
-        "; path=/; HttpOnly; Secure=true;";
-    const SessionCookie =
-        "session=" +
-        session +
-        "; " +
-        expires +
-        "; path=/; HttpOnly; Secure=true;";
+    const SMSCookie = "SMSESSION=" + SMSESSION + "; " + expires + "; path=/; HttpOnly; Secure=true;";
+    const SessionCookie = "session=" + session + "; " + expires + "; path=/; HttpOnly; Secure=true;";
 
     // call SAML API - user data endpoint
-    let response = await axios.get(`${process.env.APP_BASE_URL}/user_info`, {
+    let response = await axios.get(`${baseURL}/user_info`, {
       headers: {
-        Cookie: `${SessionCookie} ${SMSCookie}`,
-      },
+        'Cookie': `${SessionCookie} ${SMSCookie}`
+      }
     });
-    const { data = {} } = response || {};
-    const { SMGOV_GUID = [null], username = [null] } = data || {};
+    const {data = {}} = response || {};
+    const { SMGOV_GUID=[null], username=[null] } = data || {};
 
     // test that tokens exist
-    if (!data || !SMGOV_GUID[0] || !username[0])
-      return next(new Error("noAuth"));
+
+    if ( !data || !SMGOV_GUID[0] || !username[0] )
+      return next(new Error('noAuth'));
 
     // reformat guest user data
-    const guestUserData = {
-      guid: SMGOV_GUID[0],
-      username: username[0],
-      role: "inactive",
-    };
+    const guestUserData = { guid: SMGOV_GUID[0], username: username[0], role: 'inactive' };
 
     // check if user is registered
-    const registeredUserData = await UserModel.findOne({
-      guid: guestUserData.guid,
-    });
+    const registeredUserData = await UserModel.findOne({guid: guestUserData.guid});
+    if (!registeredUserData) return next(new Error('noAuth'));
 
     // store user data in response for downstream middleware
     res.locals.user = registeredUserData || guestUserData;
     return next();
+
   } catch (err) {
-    return next(err);
+    return next(err)
   }
-};
+
+}
 
 /**
  * Authorize user access based on ID submitted.
@@ -101,24 +92,24 @@ exports.authenticate = async (req, res, next) => {
 
 exports.authorizeData = async (req, res, next) => {
   try {
-    if (
-        res.locals.user.role === "administrator" ||
-        res.locals.user.role === "super-administrator"
-    ) {
+
+    if (res.locals.user.role === 'administrator'
+      || res.locals.user.role === 'super-administrator') {
       return next();
     }
-    const { id = null } = req.params || {};
+    const {id = null} = req.params || {};
     const nomination = await NominationModel.findById(id);
-    const { guid = "" } = nomination || {};
+    const {guid=''} = nomination || {};
     if (res.locals.user.guid === guid) {
       return next();
-    } else {
-      return next(new Error("noAuth"));
+    }
+    else {
+      return next(new Error('noAuth'));
     }
   } catch (err) {
-    return next(err);
+    return next(err)
   }
-};
+}
 
 /**
  * Authorize user access based on attachment ID submitted.
@@ -131,29 +122,25 @@ exports.authorizeData = async (req, res, next) => {
 
 exports.authorizeAttachment = async (req, res, next) => {
   try {
-    if (
-        res.locals.user.role === "administrator" ||
-        res.locals.user.role === "super-administrator"
-    ) {
+    if (res.locals.user.role === 'administrator' || res.locals.user.role === 'super-administrator') {
       return next();
     }
-    const { id = null } = req.params || {};
+    const {id = null} = req.params || {};
     const attachment = await AttachmentModel.findById(id);
-    const nomination = await NominationModel.findById(
-        attachment.nomination || ""
-    );
-    const { guid = "", role = "" } = nomination || {};
+    const nomination = await NominationModel.findById(attachment.nomination || '');
+    const { guid='', role='' } = nomination || {};
     // reject unregistered users
-    if (!role || role === "inactive") return next(new Error("noAuth"));
+    if (!role || role === 'inactive') return next(new Error('noAuth'));
     if (res.locals.user.guid === guid) {
       return next();
-    } else {
-      return next(new Error("noAuth"));
+    }
+    else {
+      return next(new Error('noAuth'));
     }
   } catch (err) {
-    return next(err);
+    return next(err)
   }
-};
+}
 
 /**
  * Authorize user access based on GUID.
@@ -167,25 +154,24 @@ exports.authorizeAttachment = async (req, res, next) => {
 exports.authorizeUser = async (req, res, next) => {
   try {
     // reject unauthenticated users
-    if (!res.locals.user) return next(new Error("noAuth"));
-    const { role = "" } = res.locals.user || {};
-    const { guid = null } = req.params || {};
+    if (!res.locals.user) return next(new Error('noAuth'));
+    const {role=''} = res.locals.user || {};
+    const {guid = null} = req.params || {};
     // reject unregistered users
-    if (!role || role === "inactive") return next(new Error("noAuth"));
+    if (!role || role === 'inactive') return next(new Error('noAuth'));
     // ensure GUID attached to the nomination matches the user GUID
     if (
-        res.locals.user.guid === guid ||
-        role === "administrator" ||
-        role === "super-administrator"
-    ) {
+      res.locals.user.guid === guid || role === 'administrator' || role === 'super-administrator') {
       return next();
-    } else {
-      return next(new Error("noAuth"));
+    }
+    else {
+      return next(new Error('noAuth'));
     }
   } catch (err) {
-    return next(err);
+    return next(err)
   }
-};
+}
+
 
 /**
  * Authorize user access based on user privileges.
@@ -211,25 +197,36 @@ exports.authorizeRegistrar = async (req, res, next) => {
   }
 };
 
+/**
+ * Authorize user access based on user privileges.
+ *
+ * @param req
+ * @param res
+ * @param {Array} allowedRoles
+ * @src public
+ */
+
 exports.authorizeAdmin = async (req, res, next) => {
-  if (!res.locals.user) return next(new Error("noAuth"));
-  const { role = "" } = res.locals.user || {};
-  if (role === "administrator" || role === "super-administrator") {
+  if (!res.locals.user) return next(new Error('noAuth'));
+  const {role=''} = res.locals.user || {};
+  if (role === 'administrator' || role === 'super-administrator') {
     next();
-  } else {
-    return next(new Error("noAuth"));
   }
-};
+  else {
+    return next(new Error('noAuth'));
+  }
+}
 
 exports.authorizeSuperAdmin = async (req, res, next) => {
-  if (!res.locals.user) return next(new Error("noAuth"));
-  const { role = "" } = res.locals.user || {};
-  if (role === "super-administrator") {
+  if (!res.locals.user) return next(new Error('noAuth'));
+  const {role=''} = res.locals.user || {};
+  if (role === 'super-administrator') {
     next();
-  } else {
-    return next(new Error("noAuth"));
   }
-};
+  else {
+    return next(new Error('noAuth'));
+  }
+}
 
 /**
  * Create admin user
@@ -240,26 +237,26 @@ exports.authorizeSuperAdmin = async (req, res, next) => {
 
 const createUser = async (userData) => {
   const {
-    guid = null,
-    username = null,
-    firstname = "",
-    lastname = "",
-    email = "",
-    role = "",
+    guid=null,
+    username=null,
+    firstname='',
+    lastname='',
+    email='',
+    role=''
   } = userData || {};
 
   // Validate user input
   if (!(guid && username && role)) {
-    throw new Error("invalidInput");
+    throw new Error('invalidInput');
   }
   if (!!email && !validateEmail(email)) {
-    throw new Error("invalidEmail");
+    throw new Error('invalidEmail');
   }
 
   // validate if user exists in database
   const existingUser = await UserModel.findOne({ guid: guid });
   if (existingUser) {
-    throw new Error("userExists");
+    throw new Error('userExists');
   }
 
   // Create user in our database
@@ -269,9 +266,10 @@ const createUser = async (userData) => {
     firstname: firstname,
     lastname: lastname,
     email: email.toLowerCase(),
-    role: role,
+    role: role
   });
-};
+
+}
 exports.create = createUser;
 
 /**
@@ -279,21 +277,23 @@ exports.create = createUser;
  * - creates default super-admin user (if none exists)
  */
 
-const initUsers = async () => {
-  if (!process.env.ADMIN_GUID || !process.env.ADMIN_ID) {
-    console.warn("Default super-administrator not initialized.");
+const initUsers = async() => {
+  if (!superadminGUID || !superadminUser) {
+    console.log(`[${nodeEnv}] Default super-administrator NOT initialized.`);
     return;
   }
-  const user = await UserModel.findOne({ guid: process.env.ADMIN_GUID });
+  const user = await UserModel.findOne({guid: superadminGUID});
   if (!user) {
     await createUser({
-      guid: process.env.ADMIN_GUID,
-      username: process.env.ADMIN_ID,
-      role: "super-administrator",
+      guid: superadminGUID,
+      username: superadminUser,
+      role: 'super-administrator'
     });
-    console.log("Default super-administrator created.");
+    console.log(`[${nodeEnv}] Default super-administrator created.`);
   } else {
-    console.log("Default super-administrator initialized.");
+    console.log(`[${nodeEnv}] Default super-administrator initialized.`);
   }
-};
-initUsers().catch(console.error);
+}
+if (process.env.NODE_ENV !== 'test')
+  initUsers().catch((err) => new Error(err));
+

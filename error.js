@@ -7,6 +7,10 @@
 
 'use strict';
 
+// global logger
+const {logger} = require('./logger');
+
+// error codes/messages
 const errors = {
   default: {
     hint: 'Generic error for server failure.',
@@ -22,7 +26,7 @@ const errors = {
   },
   noTestInit: {
     hint: 'Test user was not created.',
-    msg: 'Test user not initialized. Ensure the .env file is updated.',
+    msg: 'Test user not initialized for local environment. Ensure the .env file is complete.',
     status: 500,
     type: 'error'
   },
@@ -180,7 +184,7 @@ function decodeError(err = null) {
   const { message='', code='' } = err || {};
 
   // Check for Postgres error codes
-  const key = code ? code : message;
+  const key = code ? code : message ? message : err;
 
   return errors.hasOwnProperty(key) ? errors[key] : errors.default;
 }
@@ -197,11 +201,6 @@ function decodeError(err = null) {
 
 exports.globalHandler = function (err, req, res, next) {
   const e = decodeError(err);
-
-  // report to logger
-  console.error(`ERROR (${err.message})\t${e.msg}\t${e.status}\t${e.hint}`)
-  console.error(`Details:\n\n${err}\n\n`)
-
   // send response
   res.status(e.status).json(
     {
@@ -212,7 +211,9 @@ exports.globalHandler = function (err, req, res, next) {
       }
     }
   );
-  next();
+  const timestamp = new Date();
+  logger.error(`[ERROR] ${e.status} | ${e.msg} ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip} ${timestamp}`);
+  logger.error(`Details:\n\n${err}\n\n`);
 }
 
 /**
@@ -222,10 +223,9 @@ exports.globalHandler = function (err, req, res, next) {
  * @public
  * @param req
  * @param res
- * @param next
  */
 
-exports.notFoundHandler = function (req, res, next) {
+exports.notFoundHandler = function (req, res) {
   res.status(404).json(
     {
       view: 'notFound',
@@ -235,5 +235,6 @@ exports.notFoundHandler = function (req, res, next) {
       }
     }
   );
-  next();
+  const timestamp = new Date();
+  logger.error(`[NotFound] 404 | ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} ${timestamp}`);
 }

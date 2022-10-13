@@ -7,9 +7,13 @@
 
 "use strict";
 
+// express init
 const express = require("express");
 const cors = require("cors");
 require('dotenv').config();
+
+// logging
+const { logger, errorLogger, requestLogger} = require("./logger");
 
 // Database
 require("./db");
@@ -19,6 +23,7 @@ const mongoSanitize = require("express-mongo-sanitize");
 const { notFoundHandler, globalHandler } = require("./error");
 const cookieParser = require("cookie-parser");
 const { authenticate } = require("./services/auth.services");
+
 // const helmet = require('helmet');
 
 /**
@@ -51,6 +56,7 @@ const apiRouters = [
     {path: '/tables', router: require("./routes/events.router")}
 ];
 
+
 // configure frontend applications
 const appsConfig = [
     {
@@ -67,13 +73,6 @@ const appsConfig = [
     },
 ];
 
-// request logger
-const logger = function (req, res, next) {
-    const d = new Date();
-    console.log(`[${nodeENV}] Request: `, req.method, req.path || '', res.statusCode, d);
-    next();
-}
-
 // configure CORS allowed hostnames
 const allowedOrigins = process.env.NODE_ENV === "local"
     ? appsConfig.map(app => {return `${baseURL}${nodeENV === 'local' ? `:${app.port}` : ''}`})
@@ -84,8 +83,7 @@ const corsConfig = {
         if (!origin) return callback(null, true);
         if (allowedOrigins.indexOf(origin) === -1) {
             const msg =
-                "The CORS policy for this site does not " +
-                "allow access from the specified origin: \n" +
+                "The CORS policy for this site does not allow access from the specified origin: \n" +
                 origin;
             return callback(new Error(msg), false);
         }
@@ -110,26 +108,26 @@ api.use(cors(corsConfig));
 // parse cookies to store session data
 api.use(cookieParser(process.env.COOKIE_SECRET));
 
+// sanitize db keys to prevent injection
+api.use(mongoSanitize());
+
+// authenticate user for all routes
+api.all("*", authenticate);
+
+// log requests
+api.use(requestLogger);
+
 // initialize routers for API requests
 api.use('/', indexRouter);
 apiRouters.forEach(apiRouter => {
     indexRouter.use(apiRouter.path, apiRouter.router);
 });
 
-// authenticate user for all routes
-api.all("*", authenticate);
-
-// sanitize db keys to prevent injection
-api.use(mongoSanitize());
-
 // handle generic errors
 api.use(globalHandler);
 
 // handle 404 errors
 api.use(notFoundHandler);
-
-// log all requests
-api.use(logger);
 
 // Run API server
 api.listen(process.env.API_PORT, () => {
@@ -141,3 +139,6 @@ api.listen(process.env.API_PORT, () => {
     console.log(`\t- Allowed origins:`, allowedOrigins.join(', '));
     console.log(`============================================`);
 });
+
+// expose API
+exports.api = api;

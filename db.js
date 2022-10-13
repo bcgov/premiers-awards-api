@@ -20,7 +20,7 @@ const databaseName = process.env.DATABASE_NAME;
 const connectionURL = `${protocol}${databaseHost}:${databasePort}/${databaseName}`;
 
 // DEBUG db connection URL
-if (process.env.DEBUG) {
+if (process.env.DEBUG === 'true') {
   console.log('\n\n=== DEBUG ===')
   console.log(`Connection URL:\t\t${connectionURL}`);
   console.log(`\t- User:\t\t${databaseUser}\n\t- Password:\t${databasePassword}`);

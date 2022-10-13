@@ -24,7 +24,6 @@ exports.getByNomination = async (req, res, next) => {
     const attachments = await AttachmentModel.find({ nomination: id });
     return res.status(200).json(attachments);
   } catch (err) {
-    console.error(err)
     return next(err);
   }
 };
@@ -136,7 +135,6 @@ exports.delete = async (req, res, next) => {
     // delete attachment file
     const { file={} } = attachment || {};
     const { path = '' } = file || {};
-    console.log('Delete', attachment)
     await deleteFile(path);
 
     res.status(200).json(response);
