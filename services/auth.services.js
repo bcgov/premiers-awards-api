@@ -32,6 +32,7 @@ const superadminUser = process.env.SUPER_ADMIN_USER;
 
 exports.authenticate = async (req, res, next) => {
   try {
+
     // [dev] skip authentication on test/local environments
     if (nodeEnv === 'local' || nodeEnv === 'test') {
       res.locals.user = await UserModel.findOne({guid: superadminGUID})

@@ -116,14 +116,12 @@ api.use(requestLogger);
 
 // initialize routers for API requests
 
-// liveliness route (no authentication)
+// status route (no authentication)
 api.use('/', indexRouter);
 
-// authenticate user for all other routes
-api.all("*", authenticate);
-
-// all other routes
+// secure routes
 apiRouters.forEach(apiRouter => {
+    indexRouter.use(apiRouter.path, authenticate);
     indexRouter.use(apiRouter.path, apiRouter.router);
 });
 
