@@ -45,7 +45,7 @@ const { authenticate } = require("./services/auth.services");
  */
 
 // base API/application url
-const baseURL = process.env.APP_BASE_URL;
+const baseURL = process.env.BASE_URL;
 const nodeENV = process.env.NODE_ENV;
 
 // API Routers

@@ -35,7 +35,7 @@ volumes:
 ```
 NODE_ENV=local
 DEBUG=true
-APP_BASE_URL=http://localhost
+BASE_URL=http://localhost
 
 API_PORT=3000
 ADMIN_APP_PORT=3001
