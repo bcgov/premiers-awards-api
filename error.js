@@ -26,7 +26,7 @@ const errors = {
   },
   noTestInit: {
     hint: 'Test user was not created.',
-    msg: 'Test user not initialized for local environment. Ensure the .env file is complete.',
+    msg: 'Test user not initialized for local environment. Ensure the .env.production file is complete.',
     status: 500,
     type: 'error'
   },
