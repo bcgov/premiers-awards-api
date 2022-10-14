@@ -81,7 +81,6 @@ const allowedOrigins = process.env.NODE_ENV === "local"
 
 const corsConfig = {
     origin: function (origin, callback) {
-        console.log(origin, callback)
         if (!origin) return callback(null, true);
         if (allowedOrigins.indexOf(origin) === -1) {
             const msg =
