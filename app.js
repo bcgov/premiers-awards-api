@@ -15,7 +15,7 @@ require('dotenv').config();
 // logging
 const { requestLogger} = require("./logger");
 
-// Database
+// initialize database
 require("./db");
 const mongoSanitize = require("express-mongo-sanitize");
 
@@ -74,12 +74,14 @@ const appsConfig = [
 ];
 
 // configure CORS allowed hostnames
+// configure CORS allowed hostnames
 const allowedOrigins = process.env.NODE_ENV === "local"
     ? appsConfig.map(app => {return `${baseURL}${nodeENV === 'local' ? `:${app.port}` : ''}`})
-    : [process.env.APP_BASE_URL];
+    : [baseURL];
 
 const corsConfig = {
     origin: function (origin, callback) {
+        console.log(origin, callback)
         if (!origin) return callback(null, true);
         if (allowedOrigins.indexOf(origin) === -1) {
             const msg =
@@ -89,6 +91,7 @@ const corsConfig = {
         }
         return callback(null, true);
     },
+
     methods: ["GET", "POST"],
     credentials: true,
     optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
@@ -138,7 +141,6 @@ api.listen(process.env.API_PORT, () => {
     console.log(`API running on port ${process.env.API_PORT}.`);
     console.log(`\t- Node environment: ${nodeENV}`);
     console.log(`\t- Available on a web browser at: ${url}`);
-    console.log(`\t- Allowed origins:`, allowedOrigins.join(', '));
     console.log(`============================================`);
 });
 
