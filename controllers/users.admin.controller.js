@@ -108,7 +108,6 @@ exports.assign = async (req, res, next) => {
 
 exports.info = async (req, res, next) => {
   try {
-    console.log('!!!', res.locals.user)
     res.status(200).json(res.locals.user);
   } catch (err) {
     return next(err);
