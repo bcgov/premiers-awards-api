@@ -45,7 +45,10 @@ const { authenticate } = require("./services/auth.services");
  */
 
 // base API/application url
-const baseURL = process.env.BASE_URL;
+const baseURL = process.env.PA_APPS_BASE_URL;
+const apiURL = process.env.PA_APPS_API_URL;
+const apiPort = process.env.PA_APPS_API_PORT;
+const appsURLs = [apiURL, process.env.PA_APPS_ADMIN_URL, process.env.PA_APPS_NOMINATIONS_URL, process.env.PA_APPS_EVENTS_URL]
 const nodeENV = process.env.NODE_ENV;
 
 // API Routers
@@ -56,28 +59,9 @@ const apiRouters = [
     {path: '/tables', router: require("./routes/events.router")}
 ];
 
-
-// configure frontend applications
-const appsConfig = [
-    {
-        name: 'admin',
-        port: process.env.ADMIN_APP_PORT,
-    },
-    {
-        name: 'nominations',
-        port: process.env.NOMINATIONS_APP_PORT,
-    },
-    {
-        name: 'table-registrations',
-        port: process.env.TABLE_REGISTRATIONS_APP_PORT,
-    },
-];
-
 // configure CORS allowed hostnames
 // configure CORS allowed hostnames
-const allowedOrigins = process.env.NODE_ENV === "local"
-    ? appsConfig.map(app => {return `${baseURL}${nodeENV === 'local' ? `:${app.port}` : ''}`})
-    : [baseURL];
+const allowedOrigins = process.env.NODE_ENV === "development" ? appsURLs : [baseURL];
 
 const corsConfig = {
     origin: function (origin, callback) {
@@ -134,12 +118,12 @@ api.use(globalHandler);
 api.use(notFoundHandler);
 
 // Run API server
-api.listen(process.env.API_PORT, () => {
+api.listen(apiPort, () => {
     console.log(`============================================`);
-    const url = `${baseURL}${nodeENV === 'local' ? `:${process.env.API_PORT}` : ''}`
-    console.log(`API running on port ${process.env.API_PORT}.`);
+    console.log(`API running on port ${apiPort}.`);
     console.log(`\t- Node environment: ${nodeENV}`);
-    console.log(`\t- Available on a web browser at: ${url}`);
+    console.log(`\t- Available on a web browser at: ${apiURL}`);
+    console.log(`\t- Allowed origins:`, allowedOrigins.join(', '));
     console.log(`============================================`);
 });
 

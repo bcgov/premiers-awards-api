@@ -13,7 +13,7 @@ const {validateEmail} = require('./validation.services');
 require('dotenv').config();
 
 const nodeEnv = process.env.NODE_ENV;
-const baseURL = process.env.BASE_URL;
+const baseURL = process.env.PA_EVENTS_API_URL;
 const superadminGUID = process.env.SUPER_ADMIN_GUID;
 const superadminUser = process.env.SUPER_ADMIN_USER;
 
@@ -34,7 +34,7 @@ exports.authenticate = async (req, res, next) => {
   try {
 
     // [dev] skip authentication on test/local environments
-    if (nodeEnv === 'local' || nodeEnv === 'test') {
+    if (nodeEnv === 'development' || nodeEnv === 'test') {
       res.locals.user = await UserModel.findOne({guid: superadminGUID})
           || {guid: superadminGUID, username: superadminUser};
       // check that test admin user has been initialized
