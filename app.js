@@ -47,7 +47,7 @@ const { authenticate } = require("./services/auth.services");
 // base API/application url
 const baseURL = process.env.PA_APPS_BASE_URL;
 const apiURL = process.env.PA_APPS_API_URL;
-const apiPort = process.env.PA_APPS_API_PORT;
+const apiPort = process.env.PA_APPS_API_PORT || 3000;
 const appsURLs = [apiURL, process.env.PA_APPS_ADMIN_URL, process.env.PA_APPS_NOMINATIONS_URL, process.env.PA_APPS_EVENTS_URL]
 const nodeENV = process.env.NODE_ENV;
 
