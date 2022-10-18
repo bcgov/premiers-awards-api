@@ -176,11 +176,10 @@ exports.generateTableSetup = async (req, res, next) => {
 
     const guestCount = await GuestModel.countDocuments({});
     //default layout
-    //const tableCount = 72;
+    const tableCount = 72;
 
     //custom layout based on guests is possible
-    const tableCount =
-      guestCount / 10 > 1 ? Math.ceil(guestCount / 10) + 10 : 1;
+    //const tableCount = guestCount / 10 > 1 ? Math.ceil(guestCount / 10) + 10 : 1;
 
     for (let i = 0; i < tableCount; i++) {
       const guid = genID();
