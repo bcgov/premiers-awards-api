@@ -225,6 +225,8 @@ exports.updateTable = async (req, res, next) => {
     const data = req.body;
     const id = req.params.id;
 
+    console.log('!!!', id, data)
+
     // look up guest exists
     const table = await TableModel.findById(id);
     if (!table) return next(Error("invalidInput"));

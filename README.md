@@ -33,14 +33,17 @@ volumes:
 2. Create the following `.env` file and save it to the API root directory:
 
 ```
-NODE_ENV=local
+NODE_ENV=development
 DEBUG=true
-BASE_URL=http://localhost
 
-API_PORT=3000
-ADMIN_APP_PORT=3001
-NOMINATIONS_APP_PORT=3002
-TABLE_REGISTRATIONS_APP_PORT=3003
+COOKIE_SECRET=somesecret
+
+PA_APPS_BASE_URL: "http://localhost"
+PA_APPS_API_URL: "http://localhost:3000"
+PA_APPS_API_PORT: "3000"
+PA_APPS_ADMIN_URL: "http://localhost:3001"
+PA_APPS_NOMINATIONS_URL: "http://localhost:3002"
+PA_APPS_EVENTS_URL: "http://localhost:3003"
 
 DATABASE_HOST=localhost
 DATABASE_PORT=27017

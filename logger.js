@@ -38,6 +38,6 @@ exports.logger = logger;
 
 exports.requestLogger = function (req, res, next) {
     const d = new Date();
-    logger.info(`[${process.env.NODE_ENV}] - ${req.originalUrl} - ${req.method} - ${req.ip}`, d);
+    logger.info(`[${process.env.NODE_ENV}] - ${req.originalUrl} - ${req.method} - ${req.ip} ${d}`);
     next();
 }
