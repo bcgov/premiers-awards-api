@@ -297,3 +297,53 @@ exports.deleteRegistration = async (req, res, next) => {
     return next(err);
   }
 };
+
+/**
+ * Push Financial Registration information to registration
+ *
+ * @param req
+ * @param res
+ * @param next
+ * @src public
+ */
+
+exports.pushDetails = async (req, res, next) => {
+  try {
+    const data = req.body;
+    const id = req.params.id;
+
+    // look up guest exists
+    const table = await RegistrationModel.findById(id);
+    if (!table) return next(Error("invalidInput"));
+    await RegistrationModel.updateOne({ _id: id }, { $push: data });
+    const newTable = await RegistrationModel.findById(id);
+    res.status(200).json(newTable);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+/**
+ * Pull Financial Registration information from registration
+ *
+ * @param req
+ * @param res
+ * @param next
+ * @src public
+ */
+
+exports.pullDetails = async (req, res, next) => {
+  try {
+    const data = req.body;
+    const id = req.params.id;
+
+    // look up guest exists
+    const table = await RegistrationModel.findById(id);
+    if (!table) return next(Error("invalidInput"));
+    await RegistrationModel.updateOne({ _id: id }, { $pull: data });
+    const newTable = await RegistrationModel.findById(id);
+    res.status(200).json(newTable);
+  } catch (err) {
+    return next(err);
+  }
+};

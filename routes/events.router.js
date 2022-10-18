@@ -30,6 +30,19 @@ router.post(
 
   registrationController.deleteRegistration
 );
+
+router.post(
+  "/registrations/:id/push",
+  authorizeRegistrar,
+  registrationController.pushDetails
+);
+
+router.post(
+  "/registrations/:id/pull",
+  authorizeRegistrar,
+  registrationController.pullDetails
+);
+
 router.post(
   "/registrations/:id",
   authorizeRegistrar,
