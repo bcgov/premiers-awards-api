@@ -89,6 +89,16 @@ router.post(
   tableController.generateTableSetup
 );
 router.post("/seating/deleteall", authorizeAdmin, tableController.deleteAll);
+router.post(
+  "/seating/:id/push",
+  authorizeAdmin,
+  tableController.pushTableDetails
+);
+router.post(
+  "/seating/:id/pull",
+  authorizeAdmin,
+  tableController.pullTableDetails
+);
 router.post("/seating/:id", authorizeAdmin, tableController.updateTable);
 
 router.get("/seating", authorizeRegistrar, tableController.getAllTables);
