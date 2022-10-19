@@ -5,23 +5,24 @@
  * MIT Licensed
  */
 
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 /**
  * User schema
  */
 
-const UserSchema = new Schema({
+const UserSchema = new Schema(
+  {
     guid: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
     },
     username: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
     },
     firstname: {
       type: String,
@@ -34,11 +35,21 @@ const UserSchema = new Schema({
     },
     role: {
       type: String,
-      enum: ['inactive', 'registrar', 'nominator', 'administrator', 'super-administrator'],
+      enum: [
+        "inactive",
+        "registrar",
+        "nominator",
+        "administrator",
+        "super-administrator",
+      ],
       required: true,
-    }
+    },
+    eventregistrar: {
+      type: Boolean,
+    },
   },
-  { timestamps: true });
+  { timestamps: true }
+);
 
-const UserAdminModel = mongoose.model('User', UserSchema, 'users');
+const UserAdminModel = mongoose.model("User", UserSchema, "users");
 module.exports = UserAdminModel;
