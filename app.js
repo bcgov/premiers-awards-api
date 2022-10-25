@@ -54,12 +54,11 @@ const nodeENV = process.env.NODE_ENV;
 // API Routers
 const indexRouter = require("./router");
 const apiRouters = [
-    {path: '/admin', router: require("./routes/admin.router")},
+    {path: '/app', router: require("./routes/admin.router")},
     {path: '/nominations', router: require("./routes/nominations.router")},
     {path: '/tables', router: require("./routes/events.router")}
 ];
 
-// configure CORS allowed hostnames
 // configure CORS allowed hostnames
 const allowedOrigins = process.env.NODE_ENV === "development" ? appsURLs : [baseURL];
 
