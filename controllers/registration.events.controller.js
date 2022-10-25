@@ -115,6 +115,7 @@ exports.registerTable = async (req, res, next) => {
       serviceline = "",
       stob = "",
       project = "",
+      submitted = false,
     } = req.body || {};
 
     // insert new record into collection
@@ -131,6 +132,7 @@ exports.registerTable = async (req, res, next) => {
       serviceline,
       stob,
       project,
+      submitted,
     });
 
     res.status(200).json(registration);
