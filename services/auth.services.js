@@ -35,8 +35,7 @@ exports.authenticate = async (req, res, next) => {
 
     // [dev] skip authentication on test/local environments
     if (nodeEnv === 'development' || nodeEnv === 'test') {
-      res.locals.user = await UserModel.findOne({guid: superadminGUID})
-          || {guid: superadminGUID, username: superadminUser};
+      res.locals.user = await UserModel.findOne({guid: superadminGUID}) || {guid: superadminGUID, username: superadminUser};
       // check that test admin user has been initialized
       if ( !superadminGUID || !superadminUser || !res.locals.user) return next(new Error('noTestInit'));
       return next();
@@ -66,7 +65,7 @@ exports.authenticate = async (req, res, next) => {
       return next(new Error('noAuth'));
 
     // reformat guest user data
-    const guestUserData = { guid: SMGOV_GUID[0], username: username[0], role: 'inactive' };
+    const guestUserData = { guid: SMGOV_GUID[0], username: username[0], roles: ['inactive'] };
 
     // check if user is registered
     const registeredUserData = await UserModel.findOne({guid: guestUserData.guid});
@@ -94,8 +93,7 @@ exports.authenticate = async (req, res, next) => {
 exports.authorizeData = async (req, res, next) => {
   try {
 
-    if (res.locals.user.role === 'administrator'
-      || res.locals.user.role === 'super-administrator') {
+    if (res.locals.user.roles.includes('administrator') || res.locals.user.roles.includes('super-administrator')) {
       return next();
     }
     const {id = null} = req.params || {};
@@ -123,15 +121,15 @@ exports.authorizeData = async (req, res, next) => {
 
 exports.authorizeAttachment = async (req, res, next) => {
   try {
-    if (res.locals.user.role === 'administrator' || res.locals.user.role === 'super-administrator') {
+    if (res.locals.user.roles.includes('administrator') || res.locals.user.roles.includes('super-administrator')) {
       return next();
     }
     const {id = null} = req.params || {};
     const attachment = await AttachmentModel.findById(id);
     const nomination = await NominationModel.findById(attachment.nomination || '');
-    const { guid='', role='' } = nomination || {};
+    const { guid='', roles=[] } = nomination || {};
     // reject unregistered users
-    if (!role || role === 'inactive') return next(new Error('noAuth'));
+    if (roles.length === 0 || roles.includes('inactive')) return next(new Error('noAuth'));
     if (res.locals.user.guid === guid) {
       return next();
     }
@@ -156,13 +154,16 @@ exports.authorizeUser = async (req, res, next) => {
   try {
     // reject unauthenticated users
     if (!res.locals.user) return next(new Error('noAuth'));
-    const {role=''} = res.locals.user || {};
+    const {roles=[]} = res.locals.user || {};
     const {guid = null} = req.params || {};
     // reject unregistered users
-    if (!role || role === 'inactive') return next(new Error('noAuth'));
+    if (roles.length === 0 || roles.includes('inactive')) return next(new Error('noAuth'));
     // ensure GUID attached to the nomination matches the user GUID
     if (
-      res.locals.user.guid === guid || role === 'administrator' || role === 'super-administrator') {
+      res.locals.user.guid === guid
+        || res.locals.user.roles.includes('administrator')
+        || res.locals.user.roles.includes('super-administrator')
+    ) {
       return next();
     }
     else {
@@ -185,12 +186,12 @@ exports.authorizeUser = async (req, res, next) => {
 
 exports.authorizeRegistrar = async (req, res, next) => {
   if (!res.locals.user) return next(new Error("noAuth"));
-  const { role = "" } = res.locals.user || {};
+  const { roles = [] } = res.locals.user || {};
   if (
-      role === "registrar" ||
-      role === "nominator" ||
-      role === "administrator" ||
-      role === "super-administrator"
+      roles.includes('registrar')
+      || roles.includes('nominator')
+      || roles.includes('administrator')
+      || roles.includes('super-administrator')
   ) {
     next();
   } else {
@@ -209,8 +210,8 @@ exports.authorizeRegistrar = async (req, res, next) => {
 
 exports.authorizeAdmin = async (req, res, next) => {
   if (!res.locals.user) return next(new Error('noAuth'));
-  const {role=''} = res.locals.user || {};
-  if (role === 'administrator' || role === 'super-administrator') {
+  const {roles=[]} = res.locals.user || {};
+  if (roles.includes('administrator') || roles.includes('super-administrator')) {
     next();
   }
   else {
@@ -220,8 +221,8 @@ exports.authorizeAdmin = async (req, res, next) => {
 
 exports.authorizeSuperAdmin = async (req, res, next) => {
   if (!res.locals.user) return next(new Error('noAuth'));
-  const {role=''} = res.locals.user || {};
-  if (role === 'super-administrator') {
+  const {roles=[]} = res.locals.user || {};
+  if (roles.includes('super-administrator')) {
     next();
   }
   else {
@@ -243,11 +244,11 @@ const createUser = async (userData) => {
     firstname='',
     lastname='',
     email='',
-    role=''
+    roles=[]
   } = userData || {};
 
   // Validate user input
-  if (!(guid && username && role)) {
+  if (!(guid && username && roles.length > 0)) {
     throw new Error('invalidInput');
   }
   if (!!email && !validateEmail(email)) {
@@ -267,7 +268,7 @@ const createUser = async (userData) => {
     firstname: firstname,
     lastname: lastname,
     email: email.toLowerCase(),
-    role: role
+    roles: roles
   });
 
 }
@@ -288,7 +289,7 @@ const initUsers = async() => {
     await createUser({
       guid: superadminGUID,
       username: superadminUser,
-      role: 'super-administrator'
+      roles: ['super-administrator']
     });
     console.log(`[${nodeEnv}] Default super-administrator created.`);
   } else {

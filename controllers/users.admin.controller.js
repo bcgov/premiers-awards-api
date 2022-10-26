@@ -27,77 +27,17 @@ exports.register = async (req, res, next) => {
       firstname = "",
       lastname = "",
       email = "",
-      eventregistrar = false,
     } = req.body || {};
     // ensure role is set to 'inactive' for non-activated users
     const user = await auth.create({
-      role: "inactive",
+      roles: ["inactive"],
       guid: guid,
       username: username,
       firstname: firstname,
       lastname: lastname,
       email: email,
-      eventregistrar: eventregistrar,
     });
     res.status(201).json(user);
-  } catch (err) {
-    return next(err);
-  }
-};
-
-/**
- * Activate registered nominator
- *
- * @param req
- * @param res
- * @param {Function} next
- * @method post
- * @src public
- */
-
-exports.activate = async (req, res, next) => {
-  try {
-    const { guid = null } = req.params || {};
-    const user = await UserModel.findOne({ guid: guid });
-    if (!user) return next(Error("noRecord"));
-
-    // update user role to nominator
-    const response = await UserModel.updateOne(
-      { guid: guid },
-      { role: "nominator" },
-      opts
-    );
-
-    // return new user
-    res.status(201).json(response);
-  } catch (err) {
-    return next(err);
-  }
-};
-
-/**
- * Assign registered user new role
- *
- * @param req
- * @param res
- * @param {Function} next
- * @method post
- * @src public
- */
-
-exports.assign = async (req, res, next) => {
-  try {
-    const { guid = null } = req.params || {};
-    const { role = null } = req.body || {};
-    const user = await UserModel.findOne({ guid: guid });
-    if (!user) return next(Error("noRecord"));
-    // update user role
-    const response = await UserModel.updateOne(
-      { guid: guid },
-      { role: role },
-      opts
-    );
-    res.status(201).json(response);
   } catch (err) {
     return next(err);
   }
@@ -178,9 +118,26 @@ exports.update = async (req, res, next) => {
     // look up user
     const user = await UserModel.findOne({ guid: guid });
     if (!user) return next(Error("noRecord"));
+    const {id=''} = user || {};
+    const {
+      roles = [],
+      username='',
+      firstname='',
+      lastname='',
+      email='',
+    } = data || {};
 
     // update user data in collection
-    const response = await UserModel.updateOne({ _id: user.id }, data, opts);
+    const response = await UserModel.updateOne(
+      { _id: id },
+      {
+        username: username,
+        firstname: firstname,
+        lastname: lastname,
+        email: email,
+        $set: { roles: roles }
+      }, opts);
+
     res.status(200).json(response);
   } catch (err) {
     return next(err);
@@ -244,10 +201,9 @@ exports.login = async (req, res, next) => {
     const adminUser = (await UserModel.findOne({ guid: guid })) || {};
     const {
       email = "",
-      role = "",
+      roles = [],
       firstname = "",
-      lastname = "",
-      eventregistrar = false,
+      lastname = ""
     } = adminUser || {};
 
     // successful login
@@ -257,7 +213,7 @@ exports.login = async (req, res, next) => {
         guid: guid,
         username: username,
         email: email,
-        role: role,
+        roles: roles,
         firstname: firstname,
         lastname: lastname,
         eventregistrar: eventregistrar,

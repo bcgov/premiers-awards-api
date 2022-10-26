@@ -31,7 +31,7 @@ describe('User Endpoints', () => {
         expect(res.body).toHaveProperty("email");
         expect(res.body).toHaveProperty("firstname");
         expect(res.body).toHaveProperty("lastname");
-        expect(res.body).toHaveProperty("role");
+        expect(res.body).toHaveProperty("roles");
         expect(res.body).toHaveProperty("guid");
     });
 });
