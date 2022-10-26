@@ -215,8 +215,7 @@ exports.login = async (req, res, next) => {
         email: email,
         roles: roles,
         firstname: firstname,
-        lastname: lastname,
-        eventregistrar: eventregistrar,
+        lastname: lastname
       },
     });
   } catch (err) {
