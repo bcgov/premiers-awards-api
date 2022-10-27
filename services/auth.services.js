@@ -60,7 +60,6 @@ exports.authenticate = async (req, res, next) => {
     const { SMGOV_GUID=[null], username=[null] } = data || {};
 
     // test that tokens exist
-
     if ( !data || !SMGOV_GUID[0] || !username[0] )
       return next(new Error('noAuth'));
 

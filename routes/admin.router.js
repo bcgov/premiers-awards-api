@@ -22,7 +22,7 @@ router.get('/users/info', authController.info);
 router.get('/users/view/', authorizeAdmin, authController.getAll);
 router.get('/users/view/:guid', authorizeAdmin, authController.get);
 router.post('/users/update/:guid', authorizeAdmin, authController.update);
-router.get('/users/delete/:guid', authorizeAdmin, authController.remove);
+router.get('/users/delete/:guid', authorizeSuperAdmin, authController.remove);
 
 /**
  * Admin settings routes.

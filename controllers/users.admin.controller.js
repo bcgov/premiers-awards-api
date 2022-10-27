@@ -127,6 +127,14 @@ exports.update = async (req, res, next) => {
       email='',
     } = data || {};
 
+    // restrict administrator role updates to super-administrator users
+    const adminRoles = ['super-administrator', 'administrator'];
+    if ( user.hasOwnProperty('roles') && !res.locals.user.roles.includes('super-administrator') &&
+        (  adminRoles.some(r => user.roles.includes(r)) || adminRoles.some(r => roles.includes(r)) )
+    ) {
+      return next(new Error('noAuth'));
+    }
+
     // update user data in collection
     const response = await UserModel.updateOne(
       { _id: id },
@@ -176,7 +184,7 @@ exports.remove = async (req, res, next) => {
 };
 
 /**
- * Admin auto-login using SSO GUID and username
+ * Auto-login using SSO GUID and username
  *
  * @param req
  * @param res
@@ -197,14 +205,14 @@ exports.login = async (req, res, next) => {
     // user is not properly authenticated
     if (!guid || !username) return next(new Error("noAuth"));
 
-    // check if user is an administrator
-    const adminUser = (await UserModel.findOne({ guid: guid })) || {};
+    // get user data
+    const user = (await UserModel.findOne({ guid: guid })) || {};
     const {
       email = "",
       roles = [],
       firstname = "",
       lastname = ""
-    } = adminUser || {};
+    } = user || {};
 
     // successful login
     res.status(200).json({
