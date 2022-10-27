@@ -69,7 +69,6 @@ exports.authenticate = async (req, res, next) => {
 
     // check if user is registered
     const registeredUserData = await UserModel.findOne({guid: guestUserData.guid});
-    if (!registeredUserData) return next(new Error('noAuth'));
 
     // store user data in response for downstream middleware
     res.locals.user = registeredUserData || guestUserData;

@@ -7,6 +7,7 @@
 
 const {api} = require('../app.js');
 const supertest = require('supertest');
+require('jest')
 
 // test('the data is peanut butter', async () => {
 //     const data = await fetchData();
@@ -24,7 +25,7 @@ const supertest = require('supertest');
 
 
 describe('User Endpoints', () => {
-    it('GET /user/info should show user details', async () => {
+    test('GET /user/info should show user details', async () => {
         const res = await supertest(api).get('/admin/users/info');
         expect(res.statusCode).toEqual(200);
         expect(res.body).toHaveProperty("_id");
@@ -34,4 +35,16 @@ describe('User Endpoints', () => {
         expect(res.body).toHaveProperty("roles");
         expect(res.body).toHaveProperty("guid");
     });
+
+    test('GET /user/info should show user details', async () => {
+        const res = await supertest(api).get('/admin/users/info');
+        expect(res.statusCode).toEqual(200);
+        expect(res.body).toHaveProperty("_id");
+        expect(res.body).toHaveProperty("email");
+        expect(res.body).toHaveProperty("firstname");
+        expect(res.body).toHaveProperty("lastname");
+        expect(res.body).toHaveProperty("roles");
+        expect(res.body).toHaveProperty("guid");
+    });
+
 });
