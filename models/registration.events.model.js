@@ -42,16 +42,16 @@ const RegistrationSchema = new Schema(
       type: String,
     },
     clientministry: {
-      type: Number,
+      type: String,
     },
     respcode: {
       type: String,
     },
     serviceline: {
-      type: Number,
+      type: String,
     },
     stob: {
-      type: Number,
+      type: String,
     },
     project: {
       type: String,
