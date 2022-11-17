@@ -62,6 +62,20 @@ exports.getRegistration = async (req, res, next) => {
   }
 };
 
+exports.getUserRegistrations = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const registration = await RegistrationModel.find({
+      users: { $regex: id },
+    });
+
+    return res.status(200).json(registration);
+  } catch (err) {
+    console.error(err);
+    return next(err);
+  }
+};
+
 exports.getRegistrationGuests = async (req, res, next) => {
   try {
     const id = req.params.id;
@@ -105,6 +119,7 @@ exports.registerTable = async (req, res, next) => {
     const {
       guid = "",
       registrar = "",
+      users = [],
       organization = "",
       branch = "",
       primarycontact = "",
@@ -122,6 +137,7 @@ exports.registerTable = async (req, res, next) => {
     const registration = await RegistrationModel.create({
       guid,
       registrar,
+      users,
       organization,
       branch,
       primarycontact,
@@ -156,11 +172,11 @@ exports.updateTable = async (req, res, next) => {
     const id = req.params.id;
 
     // look up guest exists
-    const table = await RegistrationModel.findById(id);
-    if (!table) return next(Error("invalidInput"));
+    const registration = await RegistrationModel.findById(id);
+    if (!registration) return next(Error("invalidInput"));
     await RegistrationModel.updateOne({ _id: id }, data);
-    const newTable = await RegistrationModel.findById(id);
-    res.status(200).json(newTable);
+    const newRegistration = await RegistrationModel.findById(id);
+    res.status(200).json(newRegistration);
   } catch (err) {
     return next(err);
   }
@@ -315,11 +331,11 @@ exports.pushDetails = async (req, res, next) => {
     const id = req.params.id;
 
     // look up guest exists
-    const table = await RegistrationModel.findById(id);
-    if (!table) return next(Error("invalidInput"));
+    const registration = await RegistrationModel.findById(id);
+    if (!registration) return next(Error("invalidInput"));
     await RegistrationModel.updateOne({ _id: id }, { $push: data });
-    const newTable = await RegistrationModel.findById(id);
-    res.status(200).json(newTable);
+    const newRegistration = await RegistrationModel.findById(id);
+    res.status(200).json(newRegistration);
   } catch (err) {
     return next(err);
   }
@@ -340,11 +356,11 @@ exports.pullDetails = async (req, res, next) => {
     const id = req.params.id;
 
     // look up guest exists
-    const table = await RegistrationModel.findById(id);
-    if (!table) return next(Error("invalidInput"));
+    const registration = await RegistrationModel.findById(id);
+    if (!registration) return next(Error("invalidInput"));
     await RegistrationModel.updateOne({ _id: id }, { $pull: data });
-    const newTable = await RegistrationModel.findById(id);
-    res.status(200).json(newTable);
+    const newRegistration = await RegistrationModel.findById(id);
+    res.status(200).json(newRegistration);
   } catch (err) {
     return next(err);
   }
