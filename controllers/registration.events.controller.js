@@ -66,9 +66,8 @@ exports.getUserRegistrations = async (req, res, next) => {
   try {
     const id = req.params.id;
     const registration = await RegistrationModel.find({
-      users: { $regex: id },
+      "users.guid": { $regex: id },
     });
-
     return res.status(200).json(registration);
   } catch (err) {
     console.error(err);
