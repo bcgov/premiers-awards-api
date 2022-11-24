@@ -51,10 +51,14 @@ const NominationSchema = new Schema(
         },
         year: {
             type: Number,
-            required: true
         },
         guid: {
             type: String,
+            required: true
+        },
+        owner: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
             required: true
         },
         submitted: {
@@ -77,39 +81,84 @@ const NominationSchema = new Schema(
             organization: String
         },
         nominees: {
-            type: Number
+            type: Number,
+            default: 0,
         },
         partners: [PartnerSchema],
         contacts: {
             primary: {
-                firstname: String,
-                lastname: String,
-                email: String,
-                phone: String
+                firstname: {
+                    type: String,
+                    default: '',
+                },
+                lastname: {
+                    type: String,
+                    default: '',
+                },
+                email: {
+                    type: String,
+                    default: '',
+                },
+                phone: {
+                    type: String,
+                    default: '',
+                }
             },
             video: {
-                firstname: String,
-                lastname: String,
-                email: String,
+                firstname: {
+                    type: String,
+                    default: '',
+                },
+                lastname: {
+                    type: String,
+                    default: '',
+                },
+                email: {
+                    type: String,
+                    default: '',
+                },
                 locations: [LocationSchema]
             }
         },
         nominators: [NominatorSchema],
         acknowledgment: {
-            type: String,
-            enum: ['accepted', 'not_accepted'],
-            default: 'not_accepted',
+            type: Boolean,
+            default: false,
             required: function() { return this.submitted }
         },
         evaluation: {
-            summary: String,
-            context: String,
-            complexity: String,
-            approach: String,
-            valuing_people: String,
-            commitment: String,
-            contribution: String,
-            impact: String
+            summary: {
+                type: String,
+                default: '',
+            },
+            context: {
+                type: String,
+                default: '',
+            },
+            complexity: {
+                type: String,
+                default: '',
+            },
+            approach: {
+                type: String,
+                default: '',
+            },
+            valuing_people: {
+                type: String,
+                default: '',
+            },
+            commitment: {
+                type: String,
+                default: '',
+            },
+            contribution: {
+                type: String,
+                default: '',
+            },
+            impact: {
+                type: String,
+                default: '',
+            }
         },
         attachments: [{
             type: Schema.Types.ObjectId,
