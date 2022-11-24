@@ -5,13 +5,14 @@
  * MIT Licensed
  */
 
+const UserModel = require('../models/user.admin.model');
 const NominationModel = require('../models/entry.nominations.model');
 const AttachmentModel = require('../models/attachment.nominations.model');
 const counter = require('../models/counter.nominations.model');
 const { fileExists, createZIP, createCSV, createZIPPackage} = require('../services/files.services');
 const { generateNominationPDF } = require('../services/pdf.services');
 const { Readable } = require('stream');
-const {validateYear} = require('../services/validation.services')
+const {checkCategory} = require("../services/schema.services");
 
 // limit number of draft nomination submissions
 const maxNumberOfDrafts = 10;
@@ -28,7 +29,9 @@ const maxNumberOfDrafts = 10;
 exports.get = async (req, res, next) => {
   try {
     const { id=null } = req.params || {};
-    const nomination = await NominationModel.findById(id);
+    const nomination = await NominationModel.findById(id)
+        .populate('attachments')
+        .populate('owner');
     return res.status(200).json(nomination);
   } catch (err) {
     console.error(err)
@@ -47,7 +50,9 @@ exports.get = async (req, res, next) => {
 
 exports.getAll = async (req, res, next) => {
   try {
-    const nominations = await NominationModel.find({});
+    const nominations = await NominationModel.find({})
+        .populate('attachments')
+        .populate('owner');
     return res.status(200).json(nominations);
   } catch (err) {
     console.error(err)
@@ -69,7 +74,9 @@ exports.getByUserID = async (req, res, next) => {
   try {
     const { guid=null } = req.params || {};
     // retrieve nominations for GUID
-    const nominations = await NominationModel.find({guid: guid});
+    const nominations = await NominationModel.find({guid: guid})
+        .populate('attachments')
+        .populate('owner');
     return res.status(200).json(nominations);
   } catch (err) {
     console.error(err)
@@ -89,13 +96,26 @@ exports.getByUserID = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
     try {
-      let data = req.body;
-      const { guid='' } = data || {};
+      // retrieve category
+      const { category=null } = req.params || {};
+      if (!checkCategory(category)) return next(new Error('notFound'));
+
+      // retrieve guid and lookup user
+      const { guid=null } = res.locals.user || '';
+      const user = await UserModel.findOne({guid: guid});
+      if (!user) return next(new Error('noAuth'));
 
       // check if user is at limit for number of drafts
-      const currentNominations = await NominationModel.find({guid: guid, submitted: false});
-      if (currentNominations.length > maxNumberOfDrafts)
-        return next(new Error('maxDraftsExceeded'));
+      const currentNominations = await NominationModel.find({guid: guid}) || [];
+      if (currentNominations.length > maxNumberOfDrafts) return next(new Error('maxDraftsExceeded'));
+
+      // init nomination
+      const data = {
+        owner: user._id,
+        guid: guid,
+        category: category,
+        submitted: false,
+      };
 
       /**
        * Auto-increment nomination sequence number on save
@@ -107,13 +127,14 @@ exports.create = async (req, res, next) => {
       );
       data.seq = result.seq;
 
+      console.log(data)
+
       // insert new record into collection
       const nomination = await NominationModel.create(data);
       const { id=null } = nomination || {};
 
       // check that nomination exists
-      if (!id)
-        return next(new Error('noRecord'));
+      if (!id) return next(new Error('noRecord'));
 
       res.status(200).json(nomination);
 
@@ -139,11 +160,11 @@ exports.update = async (req, res, next) => {
 
     // look up nomination exists
     const nomination = await NominationModel.findById(id);
-    if (!nomination)
-      return next(Error('invalidInput'));
+    if (!nomination) return next(Error('invalidInput'));
 
     // reject updates to submitted nominations
-    if (nomination.submitted)
+    const {submitted=false} = nomination || {};
+    if ( submitted )
       return next(Error('alreadySubmitted'));
 
     // mark as saved draft
@@ -172,24 +193,21 @@ exports.submit = async (req, res, next) => {
   try {
     let id = req.params.id;
     let data = req.body;
-    const { year='' } = data || {};
 
     // look up nomination exists
     const nomination = await NominationModel.findById(id);
-    if ( !nomination || !year || !validateYear(year) )
-      return next(new Error('invalidInput'));
+    if ( !nomination ) return next(new Error('invalidInput'));
 
     // reject updates to submitted nominations
-    if (nomination.submitted)
-      return next(Error('alreadySubmitted'));
+    const {submitted=false} = nomination || {};
+    if ( submitted ) return next(Error('alreadySubmitted'));
 
     // lookup attachments
     data.attachments = await AttachmentModel.find({nomination: id});
 
     // generate downloadable PDF version
     const packagePath = await generateNominationPDF(data, next);
-    if (!packagePath)
-      return next(Error('PDFCorrupted'));
+    if (!packagePath) return next(Error('PDFCorrupted'));
     console.log('(After) Updated File Path:', data.filePath);
     data.filePath = packagePath;
 
@@ -281,17 +299,14 @@ exports.exporter = async (req, res, next) => {
   try {
 
     // get requested format type
-    let { format='pdf' } = req.params || [];
+    let { format='' } = req.params || {};
 
     // retrieve nomination IDs
-    let { ids = [], year='' } = req.body || [];
-
-    if (!validateYear(year)) return next(Error('invalidInput'));
+    let { ids = [] } = req.body || [];
 
     // ensure nominations IDs are valid
     const nominations = await NominationModel.find({'_id': { $in: ids }});
-    if ( nominations.length !== ids.length )
-      return next(new Error('InvalidInput'));
+    if ( nominations.length !== ids.length ) return next(new Error('InvalidInput'));
 
     // handle exporting for requested format
     // - generate zipped archive of retrieved data
@@ -318,9 +333,8 @@ exports.exporter = async (req, res, next) => {
         return await createZIPPackage(nominations[0]);
       }
     }
-    const data = exportHandlers.hasOwnProperty(format)
-      ? await exportHandlers[format]()
-      : null;
+    const data = exportHandlers.hasOwnProperty(format) ? await exportHandlers[format]() : null;
+    if ( !data ) return next(new Error('InvalidInput'));
 
     // create data stream and pipe to response
     res.on('error', (err) => {

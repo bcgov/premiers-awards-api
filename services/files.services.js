@@ -11,15 +11,15 @@ const path = require('path');
 const AdmZip = require("adm-zip");
 const multer = require('multer');
 const AttachmentModel = require("../models/attachment.nominations.model");
+const {genID} = require("./validation.services");
 
 const dataPath = process.env.DATA_PATH
-const maxUploads = 5;
 const acceptedMIMETypes = ['application/pdf'];
 
 /**
  * File uploader middleware (multer)
  * - Uploads attached files to new directory generated for each nomination as:
- *   /data/uploads/<nomination_year>/<nomination_id>/
+ *   /data/uploads/<nomination_id>/
  * - Files are saved as:
  *   <nomination_id>_<filename>.<file_extension>
  * - Files are filtered by MIME type (see restricted types)
@@ -27,48 +27,45 @@ const acceptedMIMETypes = ['application/pdf'];
  * @returns {Object}
  */
 
-const uploader = multer({
-    //specify diskStorage (another option is memory)
-    storage: multer.diskStorage({
-      //specify destination
-      // pass function that will generate destination path
-      destination: (req, file, callback) => {
+//specify destination
+// - pass function that will generate destination path
+const storage = multer.diskStorage({
+  destination: (req, file, callback) => {
 
-        // initialize upload path
-        const id = req.params.id;
-        const year = req.params.year;
-        const destination = path.join(dataPath, 'uploads', `${year}`, `${id}`);
+    // initialize upload path
+    const id = req.params.id;
+    const destination = path.join(dataPath, 'uploads', `${id}`);
 
-        // ensure directory path exists
-        fs.mkdir(destination, { recursive: true }, (err) => {
-          if (err) throw err;
-          callback(null, destination);
-        });
-      },
-      // pass function that may generate unique filename if needed
-      filename: (req, file, callback) => {
-        let id = req.params.id;
-        callback(null, `${id}_${file.originalname}`);
-      }
-    }),
+    // ensure directory path exists
+    fs.mkdir(destination, { recursive: true }, (err) => {
+      if (err) throw err;
+      callback(null, destination);
+    });
+  },
+  // pass function that may generate unique filename if needed
+  filename: (req, file, callback) => {
+    const fileID = genID();
+    callback(null, `${fileID}_${file.originalname}`);
+  }
+});
 
-    // restrict files by MIME types.
-    fileFilter: function(req, file, next){
-      if(!file){
-        next();
-      }
-      const accepted = acceptedMIMETypes.includes(file.mimetype);
-      if ( accepted ) {
-        console.log('File attachment file format is accepted.');
-        next(null, true);
-      }
-      else{
-        console.log(`Attachment file format ${file.mimetype} not supported`)
-        return next();
-      }
-    }
-  });
-exports.uploader = uploader.array('file', maxUploads);
+// restrict files by MIME types.
+const fileFilter = function(req, file, next) {
+  if(!file) next();
+
+  const accepted = acceptedMIMETypes.includes(file.mimetype);
+  if ( accepted ) {
+    console.log('File attachment file format is accepted.');
+    next(null, true);
+  }
+  else{
+    console.log(`Attachment file format ${file.mimetype} not supported`)
+    return next();
+  }
+};
+
+const uploader = multer({storage: storage, fileFilter: fileFilter});
+exports.uploader = uploader.single('attached');
 
 
 /**

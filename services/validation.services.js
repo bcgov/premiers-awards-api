@@ -1,6 +1,6 @@
 /*!
  * Form validation services/utilities
- * File: validation.services.js
+ * File: util.services.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */

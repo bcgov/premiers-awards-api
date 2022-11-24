@@ -49,7 +49,7 @@ const errors = {
     type: 'error'
   },
   invalidInput: {
-  hint: 'Input data is invalid.',
+    hint: 'Input data is invalid.',
     msg: 'Invalid or duplicated data. Please check the data fields for errors or record duplication.',
     status: 422,
     type: 'error'
@@ -132,6 +132,12 @@ const errors = {
     status: 422,
     type: 'error'
   },
+  maxAttachmentsExceeded: {
+    hint: 'Maximum number of attachments allowed for nomination.',
+    msg: 'You have reached the maximum number of attachments for your nomination.',
+    status: 422,
+    type: 'error'
+  },
   maxDraftsExceeded: {
     hint: 'Maximum number of drafts allowed for user.',
     msg: 'You have reached the maximum number of draft nominations for your account.',
@@ -203,13 +209,13 @@ exports.globalHandler = function (err, req, res, next) {
   const e = decodeError(err);
   // send response
   res.status(e.status).json(
-    {
-      view: e.status,
-      message: {
-        msg: e.msg,
-        type: e.type
+      {
+        view: e.status,
+        message: {
+          msg: e.msg,
+          type: e.type
+        }
       }
-    }
   );
   const timestamp = new Date();
   logger.error(`[ERROR] ${e.status} | ${e.msg} ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip} ${timestamp}`);
@@ -227,13 +233,13 @@ exports.globalHandler = function (err, req, res, next) {
 
 exports.notFoundHandler = function (req, res) {
   res.status(404).json(
-    {
-      view: 'notFound',
-      message: {
-        msg: errors.notFound.msg,
-        type: 'error'
+      {
+        view: 'notFound',
+        message: {
+          msg: errors.notFound.msg,
+          type: 'error'
+        }
       }
-    }
   );
   const timestamp = new Date();
   logger.error(`[NotFound] 404 | ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip} ${timestamp}`);

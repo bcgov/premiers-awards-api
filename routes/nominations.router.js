@@ -16,22 +16,23 @@ const {uploader} = require("../services/files.services");
  * Nomination data routes
  */
 
-router.get('/data/view/:id', authorizeData, dataController.get);
-router.get('/data/view/', authorizeAdmin, dataController.getAll);
-router.get('/data/user/:guid', authorizeUser, dataController.getByUserID);
-router.post('/data/create', dataController.create);
-router.post('/data/update/:id', authorizeData, dataController.update);
-router.post('/data/submit/:id', authorizeData, dataController.submit);
-router.get('/data/unsubmit/:id', authorizeAdmin, dataController.unsubmit);
-router.get('/data/delete/:id', authorizeData, dataController.delete);
-router.post('/data/export/:format', authorizeAdmin, dataController.exporter);
-router.post('/data/download/:id', authorizeAdmin, dataController.download);
+router.get('/create/:category', dataController.create);
+router.get('/view/user/:guid', authorizeUser, dataController.getByUserID);
+router.get('/view/:id', authorizeData, dataController.get);
+router.get('/view/', authorizeAdmin, dataController.getAll);
+router.post('/update/:id', authorizeData, dataController.update);
+router.post('/submit/:id', authorizeData, dataController.submit);
+router.get('/unsubmit/:id', authorizeAdmin, dataController.unsubmit);
+router.get('/delete/:id', authorizeData, dataController.delete);
+router.post('/export/:format', authorizeAdmin, dataController.exporter);
+router.post('/download/:id', authorizeAdmin, dataController.download);
 
 /**
  * Nomination attachments routes
  */
 
-router.post('/attachments/upload/:year/:id', uploader, attachmentController.upload);
+router.post('/attachments/upload/:id', uploader, attachmentController.upload);
+router.post('/attachments/update/:id', authorizeAttachment, attachmentController.update);
 router.get('/attachments/view/:id', authorizeData, attachmentController.getByNomination);
 router.get('/attachments/download/:id', authorizeAttachment, attachmentController.download);
 router.get('/attachments/delete/:id', authorizeAttachment, attachmentController.delete);
