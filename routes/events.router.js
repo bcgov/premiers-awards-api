@@ -71,6 +71,11 @@ router.get(
   registrationController.getAllRegistrations
 );
 router.get(
+  "/registrations/:id/all",
+  authorizeRegistrar,
+  registrationController.getUserRegistrations
+);
+router.get(
   "/registrations/:id/",
   authorizeRegistrar,
   registrationController.getRegistration
