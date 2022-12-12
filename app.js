@@ -52,7 +52,7 @@ const appsURLs = [apiURL, process.env.PA_APPS_ADMIN_URL, process.env.PA_APPS_NOM
 const nodeENV = process.env.NODE_ENV;
 
 // API Routers
-const indexRouter = require("./router");
+const indexRouter = require("./routes/index.router");
 const apiRouters = [
     {path: '/admin', router: require("./routes/admin.router")},
     {path: '/nominations', router: require("./routes/nominations.router")},

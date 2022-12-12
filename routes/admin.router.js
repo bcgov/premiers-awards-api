@@ -1,6 +1,6 @@
 /*!
  * Admin router
- * File: admin.router.js
+ * File: admin.index.router.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
