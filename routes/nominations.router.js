@@ -23,9 +23,9 @@ router.get('/view/', authorizeAdmin, dataController.getAll);
 router.post('/update/:id', authorizeData, dataController.update);
 router.post('/submit/:id', authorizeData, dataController.submit);
 router.get('/unsubmit/:id', authorizeAdmin, dataController.unsubmit);
-router.get('/delete/:id', authorizeData, dataController.delete);
-router.post('/export/:format', authorizeAdmin, dataController.exporter);
-router.post('/download/:id', authorizeAdmin, dataController.download);
+router.post('/delete/:id', authorizeData, dataController.delete);
+router.get('/export/:format', authorizeAdmin, dataController.exporter);
+router.get('/download/:id', authorizeAdmin, dataController.download);
 
 /**
  * Nomination attachments routes

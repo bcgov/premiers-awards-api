@@ -13,6 +13,8 @@ const path = require('path');
 const schemaServices = require('./schema.services');
 const dataPath = process.env.DATA_PATH;
 const attachmentCountLimit = 5;
+// const { parse } = require("node-html-parser");
+
 
 /**
  * Count pages in PDF document
@@ -32,13 +34,10 @@ const getPageCount = async(filePath) => {
  */
 function addHorizontalRule(doc, spaceFromEdge = 0, linesAboveAndBelow = 0.5) {
   doc.moveDown(linesAboveAndBelow);
-
   doc.moveTo(spaceFromEdge, doc.y)
     .lineTo(doc.page.width - spaceFromEdge, doc.y)
     .stroke();
-
   doc.moveDown(linesAboveAndBelow);
-
   return doc
 }
 
@@ -54,6 +53,18 @@ function addTitle(doc, title, subtitle) {
   doc.fontSize(18);
   doc.font('Helvetica-Bold').text(subtitle, {paragraphGap: 15});
   addHorizontalRule(doc, 0, 1);
+  return doc;
+}
+
+/**
+ * @param doc
+ * @param raw
+ */
+
+function addHTML(doc, raw) {
+  // const dom = parse('<div>' + raw + '</div>');
+  doc.font('Helvetica').text(raw, {paragraphGap: 15});
+  doc.moveDown(1);
   return doc;
 }
 
@@ -78,7 +89,7 @@ function addItem(doc, header, text) {
  * @returns {Object}
  */
 
-const generateNominationPDF = async function(jsonData, callback) {
+const generateNominationPDF = async function(data, callback) {
 
   // destructure nomination data
   const {
@@ -94,17 +105,18 @@ const generateNominationPDF = async function(jsonData, callback) {
     nominators= [],
     evaluation= {},
     attachments= []
-  } = jsonData || {};
-
+  } = data || {};
 
   // - use unique sequence number to label file
   // - pad sequence with 00000
-  const id = ('00000' + parseInt(seq)).slice(-5);
+  // - creates (1) nomination PDF and (2) merged PDF
+  const fileId = ('00000' + parseInt(seq)).slice(-5);
+  const basename = `${fileId}-nomination`;
   const categoryLabel = schemaServices.lookup('categories', category);
-  const filename = `submission-${_id}.pdf`;
-  const dirPath = path.join(dataPath, 'generated', String(year));
-  const submissionFilePath = path.join(dirPath, filename);
-  const mergedFilename = `nomination-${id}.pdf`;
+  const nominationFilename = `${basename}.pdf`;
+  const dirPath = path.join(dataPath, 'generated', _id.toString());
+  const nominationFilePath = path.join(dirPath, nominationFilename);
+  const mergedFilename = `${basename}-merged.pdf`;
   const mergedFilePath = path.join(dirPath, mergedFilename);
 
   // ensure directory path exists
@@ -126,7 +138,7 @@ const generateNominationPDF = async function(jsonData, callback) {
   // format PDF content
 
   // profile data
-  addTitle(doc, 'Premier\'s Awards Nomination', `Submission ID ${id}-${year}`);
+  addTitle(doc, 'Premier\'s Awards Nomination', `Submission ID ${fileId}-${year}`);
   addItem(doc, 'Application Category', `${categoryLabel} (${year})`);
   addItem(doc, 'Name of Ministry or eligible organization sponsoring this application', schemaServices.lookup('organizations', organization));
 
@@ -196,9 +208,10 @@ const generateNominationPDF = async function(jsonData, callback) {
     Object.keys(evaluation).map(section => {
       // confirm section is included in category
       if (schemaServices.checkSection(section, category)) {
-        addItem(
-          doc,
-          `${schemaServices.lookup('evaluationSections', section)}`, evaluation[section] || 'n/a');
+        doc.fontSize(24);
+        doc.font('Times-Roman').text(`${schemaServices.lookup('evaluationSections', section)}`, {paragraphGap: 15});
+        doc.fontSize(18);
+        addHTML(doc, evaluation[section]);
       }
     })
   );
@@ -207,24 +220,24 @@ const generateNominationPDF = async function(jsonData, callback) {
   const range = doc.bufferedPageRange();
   console.log('Pages to submission:', range.start + range.count);
 
-  // create file stream and write to file
-  const stream = fs.createWriteStream(submissionFilePath);
+  // [1] create nomination metadata file stream and write to file
+  const stream = fs.createWriteStream(nominationFilePath);
   doc.pipe(stream);
   doc.end();
   stream.on('error', (err)=>{callback(err)});
   stream.on('close', async ()=>{
     try {
-      // merge attachments with main document
+      // [2] merge attachments with main document
       const merger = new PDFMerger();
       // include submission PDF file
-      merger.add(submissionFilePath);
+      await merger.add(nominationFilePath);
       // include file attachments
       console.log('Starting PDF merge...');
       await Promise.all(
         attachments.map(async (attachment) => {
           const {file = {}} = attachment || {};
           const {path = ''} = file || {};
-          merger.add(path);
+          await merger.add(path);
         }));
       console.log('Saving PDF merge...');
       //save under given name and reset the internal document
@@ -241,7 +254,7 @@ const generateNominationPDF = async function(jsonData, callback) {
     }
   })
 
-  return mergedFilePath;
+  return [mergedFilePath, nominationFilePath];
 }
 exports.generateNominationPDF = generateNominationPDF;
 

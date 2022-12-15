@@ -45,7 +45,7 @@ const storage = multer.diskStorage({
   // pass function that may generate unique filename if needed
   filename: (req, file, callback) => {
     const fileID = genID();
-    callback(null, `${fileID}_${file.originalname}`);
+    callback(null, `${file.originalname}_${fileID}`);
   }
 });
 
@@ -146,44 +146,42 @@ exports.createZIP = createZIP;
  * Generate a zipped archive of nomination files.
  *
  * @return {Promise}
- * @param jsonData
+ * @param {Array} nominations
  */
 
-const createZIPPackage = async function(jsonData) {
-
-  // destructure nomination data
-  const {
-    _id='',
-    seq='',
-    year=''
-  } = jsonData || {};
-
-  // - use unique sequence number to label file
-  // - pad sequence with 00000
-  const id = ('00000' + parseInt(seq)).slice(-5);
-  const filename = `submission-${_id}.pdf`;
-  const dirPath = path.join(dataPath, 'generated', String(year));
-  const submissionFilePath = path.join(dirPath, filename);
+const createNominationPackage = async function(nominations) {
 
   // initialize zip file
   const zip = new AdmZip();
 
-  // add submission PDF
-  zip.addLocalFile(submissionFilePath, `nomination-${id}`);
+  // create folder entries
+  await Promise.all(nominations.map(async(nomination) => {
 
-  // add attachment PDFs
-  const attachments = await AttachmentModel.find({ nomination: _id });
-  attachments.map(attachment => {
-    const {file = {}} = attachment || {};
-    const {path = ''} = file || {};
-    zip.addLocalFile(path, `nomination-${id}`);
-  });
+    const { _id='', seq='', filePaths={} } = nomination || {};
+
+    // - use unique sequence number to label nomination folder
+    const packageDir = ('00000' + parseInt(seq)).slice(-5);
+
+    // add nomination and merged files
+    zip.addLocalFile(filePaths.nomination, packageDir);
+    if (await fileExists(filePaths.merged))
+      zip.addLocalFile(filePaths.merged, packageDir);
+
+    // add attachment PDFs
+    const attachments = await AttachmentModel.find({ nomination: _id });
+    attachments.map(attachment => {
+      const {file = {}} = attachment || {};
+      const {path = ''} = file || {};
+      zip.addLocalFile(path, packageDir);
+    });
+
+  }));
 
   // toBuffer() is used to read the data and save it
   // for downloading process!
   return zip.toBuffer();
 }
-exports.createZIPPackage = createZIPPackage;
+exports.createNominationPackage = createNominationPackage;
 
 
 /**
@@ -194,14 +192,11 @@ exports.createZIPPackage = createZIPPackage;
  */
 
 const fileExists = async function (filePath) {
-  async function exists (path) {
     try {
-      await Fs.access(path)
+      await Fs.access(filePath)
       return true
     } catch {
       return false
     }
-  }
-  return await exists(filePath)
 }
 exports.fileExists = fileExists

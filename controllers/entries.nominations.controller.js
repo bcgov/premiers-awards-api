@@ -9,10 +9,11 @@ const UserModel = require('../models/user.admin.model');
 const NominationModel = require('../models/entry.nominations.model');
 const AttachmentModel = require('../models/attachment.nominations.model');
 const counter = require('../models/counter.nominations.model');
-const { fileExists, createZIP, createCSV, createZIPPackage} = require('../services/files.services');
+const { fileExists, createCSV, createNominationPackage} = require('../services/files.services');
 const { generateNominationPDF } = require('../services/pdf.services');
 const { Readable } = require('stream');
 const {checkCategory} = require("../services/schema.services");
+const mongoose = require('mongoose');
 
 // limit number of draft nomination submissions
 const maxNumberOfDrafts = 10;
@@ -127,8 +128,6 @@ exports.create = async (req, res, next) => {
       );
       data.seq = result.seq;
 
-      console.log(data)
-
       // insert new record into collection
       const nomination = await NominationModel.create(data);
       const { id=null } = nomination || {};
@@ -192,7 +191,6 @@ exports.submit = async (req, res, next) => {
 
   try {
     let id = req.params.id;
-    let data = req.body;
 
     // look up nomination exists
     const nomination = await NominationModel.findById(id);
@@ -203,21 +201,25 @@ exports.submit = async (req, res, next) => {
     if ( submitted ) return next(Error('alreadySubmitted'));
 
     // lookup attachments
-    data.attachments = await AttachmentModel.find({nomination: id});
+    nomination.attachments = await AttachmentModel.find({nomination: id});
 
     // generate downloadable PDF version
-    const packagePath = await generateNominationPDF(data, next);
-    if (!packagePath) return next(Error('PDFCorrupted'));
-    console.log('(After) Updated File Path:', data.filePath);
-    data.filePath = packagePath;
+    const [mergedPath='', nominationPath=''] = await generateNominationPDF(nomination, next);
+    if (!nominationPath) return next(Error('PDFCorrupted'));
+
+    // set file paths for merged and nomination PDFs
+    nomination.filePaths = {
+      nomination: nominationPath,
+      merged: mergedPath,
+    };
 
     // update submission status
-    data.submitted = true;
+    nomination.submitted = true;
 
     // submit nomination document as completed
-    await NominationModel.updateOne({ _id: id }, data);
+    await NominationModel.updateOne({ _id: id }, nomination);
 
-    res.status(200).json(data);
+    res.status(200).json(nomination);
 
   } catch (err) {
     return next(err);
@@ -302,36 +304,28 @@ exports.exporter = async (req, res, next) => {
     let { format='' } = req.params || {};
 
     // retrieve nomination IDs
-    let { ids = [] } = req.body || [];
+    let { ids = '[]' } = req.query || {};
+    // convert ID strings to BSON
+    ids = JSON.parse(ids).map(id => {
+      return mongoose.Types.ObjectId(id)
+    });
 
-    // ensure nominations IDs are valid
+    // retrieve nominations data and validate
     const nominations = await NominationModel.find({'_id': { $in: ids }});
-    if ( nominations.length !== ids.length ) return next(new Error('InvalidInput'));
+    if ( !Array.isArray(ids) || nominations.length !== ids.length ) return next(new Error('InvalidInput'));
 
-    // handle exporting for requested format
-    // - generate zipped archive of retrieved data
-    //  - PDF
-    //  - CSV
-    //  - ZIP
+    // handle export for requested format
+    //  - ZIP Nomination package(s) (generates zipped archive of nomination files)
+    //  - CSV formatted data
     const exportHandlers = {
-      pdf: async () => {
-        // bundle PDF versions in compressed folder
-        const zipRoot = 'nomination_package';
-        const zipEntries = nominations.map(nomination => {
-          const { filePath='' } = nomination || {};
-          return filePath;
-        });
-        return await createZIP(zipEntries, zipRoot);
+      zip: async () => {
+        // return nomination packages in compressed folder
+        return await createNominationPackage(nominations);
       },
       csv: async () => {
         // convert JSON to CSV data format
         return await createCSV(nominations);
       },
-      zip: async () => {
-        // bundle PDF versions in compressed folder
-        // - Note: single nomination sent to zipped packager
-        return await createZIPPackage(nominations[0]);
-      }
     }
     const data = exportHandlers.hasOwnProperty(format) ? await exportHandlers[format]() : null;
     if ( !data ) return next(new Error('InvalidInput'));
@@ -361,7 +355,7 @@ exports.exporter = async (req, res, next) => {
 };
 
 /**
- * Download nomination package as file.
+ * Download file.
  *
  * @param req
  * @param res

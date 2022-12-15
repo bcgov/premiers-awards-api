@@ -65,8 +65,15 @@ const NominationSchema = new Schema(
             type: Boolean,
             required: true
         },
-        filePath: {
-            type: String
+        filePaths: {
+            nomination: {
+                type: String,
+                default: '',
+            },
+            merged: {
+                type: String,
+                default: '',
+            },
         },
         organization: {
             type: String,
@@ -76,9 +83,18 @@ const NominationSchema = new Schema(
             type: String
         },
         nominee: {
-            firstname: String,
-            lastname: String,
-            organization: String
+            firstname: {
+                type: String,
+                default: '',
+            },
+            lastname: {
+                type: String,
+                default: '',
+            },
+            organization: {
+                type: String,
+                default: '',
+            }
         },
         nominees: {
             type: Number,
