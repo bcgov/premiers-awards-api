@@ -12,7 +12,7 @@ const {deleteFile} = require('../services/files.services');
 const maxAttachments = 5;
 
 /**
- * Get attachments by nomination Id.
+ * Get attachments by nomination.
  *
  * @param req
  * @param res

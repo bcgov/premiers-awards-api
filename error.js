@@ -144,6 +144,12 @@ const errors = {
     status: 422,
     type: 'error'
   },
+  maxPagesExceeded: {
+    hint: 'Maximum number of pages allowed for PDF generation.',
+    msg: 'You have exceeded the maximum number of pages allowed for a nomination document.',
+    status: 422,
+    type: 'error'
+  },
   alreadySubmitted: {
     hint: 'Nomination has submitted status.',
     msg: 'Cannot update a submitted nomination.',

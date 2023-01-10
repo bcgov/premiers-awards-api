@@ -42,10 +42,10 @@ const storage = multer.diskStorage({
       callback(null, destination);
     });
   },
-  // pass function that may generate unique filename if needed
+  // pass function that generates unique filename to avoid overwriting files
   filename: (req, file, callback) => {
     const fileID = genID();
-    callback(null, `${file.originalname}_${fileID}`);
+    callback(null, `${fileID}_${file.originalname}`);
   }
 });
 
