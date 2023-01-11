@@ -13,6 +13,7 @@ const path = require('path');
 const schemaServices = require('./schema.services');
 const sanitizeHtml = require('sanitize-html');
 const {jsPDF} = require("jspdf");
+const PCR = require("puppeteer-chromium-resolver");
 
 
 /**
@@ -248,7 +249,6 @@ const generateNominationPDF = async function(data, callback) {
   // create formatted PDF document [PDFKit]
   //const doc = await buildNominationDoc(data);
 
-  const PCR = require("puppeteer-chromium-resolver");
   const stats = PCR.getStats();
   if (stats) {
     stats.puppeteer.launch({
