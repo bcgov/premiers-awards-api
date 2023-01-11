@@ -12,6 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const schemaServices = require('./schema.services');
 const sanitizeHtml = require('sanitize-html');
+const {jsPDF} = require("jspdf");
 
 
 /**
@@ -247,34 +248,67 @@ const generateNominationPDF = async function(data, callback) {
   // create formatted PDF document [PDFKit]
   //const doc = await buildNominationDoc(data);
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
-  });
-  const page = await browser.newPage();
-  const headerHTML = `<div>Premier's Awards</div>`;
-  const footerHTML = `<div style=\"text-align: right;width: 297mm;font-size: 8px;\">
-                          <span style=\"margin-right: 1cm\">
-                              <span class=\"pageNumber\"></span> of <span class=\"totalPages\"></span>
-                          </span>
-                      </div>`;
-  const nominationHTML = generateNominationHTML(data);
-  // To use custom fonts, need puppeteer to wait for network idle status
-  await page.setContent(nominationHTML, { waitUntil: 'networkidle2' });
+  const PCR = require("puppeteer-chromium-resolver");
+  const stats = PCR.getStats();
+  if (stats) {
+    stats.puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      executablePath: stats.executablePath
+    }).then(async(browser) => {
+      const page = await browser.newPage();
+      const headerHTML = `<div>Premier's Awards</div>`;
+      const footerHTML = `<div style=\"text-align: right;width: 297mm;font-size: 8px;\">
+                              <span style=\"margin-right: 1cm\">
+                                  <span class=\"pageNumber\"></span> of <span class=\"totalPages\"></span>
+                              </span>
+                          </div>`;
+      const nominationHTML = generateNominationHTML(data);
+      // To use custom fonts, need puppeteer to wait for network idle status
+      await page.setContent(nominationHTML, { waitUntil: 'networkidle2' });
 
-  // Save PDF locally
-  await page.pdf({
-    path: nominationFilePath,
-    margin: { top: '100px', right: '50px', bottom: '100px', left: '50px' },
-    printBackground: true,
-    format: 'A4',
-    displayHeaderFooter: true,
-    headerTemplate: headerHTML,
-    footerTemplate: footerHTML
-  });
+      await page.pdf({
+        path: nominationFilePath,
+        margin: { top: '100px', right: '50px', bottom: '100px', left: '50px' },
+        printBackground: true,
+        format: 'A4',
+        displayHeaderFooter: true,
+        headerTemplate: headerHTML,
+        footerTemplate: footerHTML
+      });
 
-  // Close the browser instance
-  await browser.close();
+    }).catch(function(error) {
+      console.log(error);
+    });
+  }
+
+  // const browser = await puppeteer.launch({
+  //   headless: true,
+  //   args: ["--no-sandbox", "--disable-setuid-sandbox"]
+  // });
+  // const page = await browser.newPage();
+  // const headerHTML = `<div>Premier's Awards</div>`;
+  // const footerHTML = `<div style=\"text-align: right;width: 297mm;font-size: 8px;\">
+  //                         <span style=\"margin-right: 1cm\">
+  //                             <span class=\"pageNumber\"></span> of <span class=\"totalPages\"></span>
+  //                         </span>
+  //                     </div>`;
+  // const nominationHTML = generateNominationHTML(data);
+  // // To use custom fonts, need puppeteer to wait for network idle status
+  // await page.setContent(nominationHTML, { waitUntil: 'networkidle2' });
+
+  // // Save PDF locally
+  // await page.pdf({
+  //   path: nominationFilePath,
+  //   margin: { top: '100px', right: '50px', bottom: '100px', left: '50px' },
+  //   printBackground: true,
+  //   format: 'A4',
+  //   displayHeaderFooter: true,
+  //   headerTemplate: headerHTML,
+  //   footerTemplate: footerHTML
+  // });
+
+
 
   // get document page range for nomination portion
   // const range = doc.bufferedPageRange();
