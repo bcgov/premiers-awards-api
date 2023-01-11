@@ -5,15 +5,14 @@
  * MIT Licensed
  */
 
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
 const PDFMerger = require('pdf-merger-js');
 const pdfParser = require('pdf-parse');
 const fs = require('fs');
 const path = require('path');
 const schemaServices = require('./schema.services');
 const sanitizeHtml = require('sanitize-html');
-const {jsPDF} = require("jspdf");
-const PCR = require("puppeteer-chromium-resolver");
+
 
 
 /**
@@ -249,38 +248,38 @@ const generateNominationPDF = async function(data, callback) {
   // create formatted PDF document [PDFKit]
   //const doc = await buildNominationDoc(data);
 
-  const stats = PCR.getStats();
-  if (stats) {
-    stats.puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      executablePath: stats.executablePath
-    }).then(async(browser) => {
-      const page = await browser.newPage();
-      const headerHTML = `<div>Premier's Awards</div>`;
-      const footerHTML = `<div style=\"text-align: right;width: 297mm;font-size: 8px;\">
-                              <span style=\"margin-right: 1cm\">
-                                  <span class=\"pageNumber\"></span> of <span class=\"totalPages\"></span>
-                              </span>
-                          </div>`;
-      const nominationHTML = generateNominationHTML(data);
-      // To use custom fonts, need puppeteer to wait for network idle status
-      await page.setContent(nominationHTML, { waitUntil: 'networkidle2' });
+  // these dns options are not needed if using an load balancer or ingress
+  // const options = {
+  //   family: 4,
+  //   hints: dns.ADDRCONFIG | dns.V4MAPPED
+  // }
+  // const { address: host } = await dns.lookup('puppeteer', options, (address) => {
+  //   return address
+  // })
+  const browser = await puppeteer.connect({
+    browserURL: `http://puppeteer:4000`
+  })
 
-      await page.pdf({
-        path: nominationFilePath,
-        margin: { top: '100px', right: '50px', bottom: '100px', left: '50px' },
-        printBackground: true,
-        format: 'A4',
-        displayHeaderFooter: true,
-        headerTemplate: headerHTML,
-        footerTemplate: footerHTML
-      });
+  const page = await browser.newPage();
+  const headerHTML = `<div>Premier's Awards</div>`;
+  const footerHTML = `<div style=\"text-align: right;width: 297mm;font-size: 8px;\">
+                          <span style=\"margin-right: 1cm\">
+                              <span class=\"pageNumber\"></span> of <span class=\"totalPages\"></span>
+                          </span>
+                      </div>`;
+  const nominationHTML = generateNominationHTML(data);
+  // To use custom fonts, need puppeteer to wait for network idle status
+  await page.setContent(nominationHTML, { waitUntil: 'networkidle2' });
 
-    }).catch(function(error) {
-      console.log(error);
+    await page.pdf({
+      path: nominationFilePath,
+      margin: { top: '100px', right: '50px', bottom: '100px', left: '50px' },
+      printBackground: true,
+      format: 'A4',
+      displayHeaderFooter: true,
+      headerTemplate: headerHTML,
+      footerTemplate: footerHTML
     });
-  }
 
   // const browser = await puppeteer.launch({
   //   headless: true,
