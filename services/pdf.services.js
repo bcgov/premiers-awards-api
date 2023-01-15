@@ -5,15 +5,13 @@
  * MIT Licensed
  */
 
-const puppeteer = require('puppeteer-core');
-const PDFMerger = require('pdf-merger-js');
 const pdfParser = require('pdf-parse');
+const { PDFDocument } = require('pdf-lib')
 const fs = require('fs');
 const path = require('path');
 const schemaServices = require('./schema.services');
 const sanitizeHtml = require('sanitize-html');
-
-
+const axios = require("axios");
 
 /**
  * Configuration settings
@@ -110,6 +108,11 @@ const generateNominationHTML = function(data) {
 
   const nominationTableItems = [
     {
+      label: 'Created',
+      value: Date().toString(),
+      visible: true
+    },
+    {
       label: 'Application Category',
       value: schemaServices.lookup('categories', category),
       visible: true
@@ -177,39 +180,65 @@ const generateNominationHTML = function(data) {
   ];
 
   // create html template for nomination
-  return `<html lang="en/us">
-        <head>
+  return `<!DOCTYPE html><html lang="en/us">
+            <head>
             <title>${title}</title>
             <style>
-              @import url(${customFontURL});
-              body {
-                font-family: "Roboto", serif, sans-serif;
-              }
-                main {display: flex;}
-                main > * {border: 1px solid;}
-                table {
-                    border-collapse: collapse; 
-                    font-family: inherit, helvetica, sans-serif
+                /* @import url(${customFontURL}); */
+                body {
+                  font-family: helvetica, sans-serif;
                 }
-                td, th {
-                    border-bottom: 1px solid #888888;
-                    padding: 10px;
-                    min-width: 200px;
-                    background: white;
-                    box-sizing: border-box;
-                    text-align: left;
-                }
-                th {
-                  background: #DDDDDD;
-                }
-            </style>
-        </head>
+                  main {display: flex;}
+                  main > * {border: 1px solid;}
+                  table {
+                      border-collapse: collapse; 
+                      font-family: inherit, helvetica, sans-serif
+                  }
+                  td, th {
+                      border-bottom: 1px solid #888888;
+                      padding: 10px;
+                      min-width: 200px;
+                      background: white;
+                      box-sizing: border-box;
+                      text-align: left;
+                      vertical-align: top;
+                  }
+                  th {
+                    background: #DDDDDD;
+                  }
+              </style>
+            </head>
         <body>
             <h1>Premier's Awards Nomination</h1>
             <h2>Submission ID ${submissionID}</h2>
             ${addHTMLTable(nominationTableItems)}
         </body>
     </html>`;
+}
+
+
+/**
+ * Merge PDF documents into single PDF document
+ *
+ * @param {Array} documents
+ * @param {String} filePath
+ * @returns {Object}
+ */
+
+async function mergePDFDocuments(documents, filePath) {
+  const mergedPdf = await PDFDocument.create();
+  const fd = fs.openSync(filePath, "w+");
+
+  for (let document of documents) {
+    // Use pdf-lib static load (See: https://pdf-lib.js.org/docs/api/classes/pdfdocument#static-load)
+    const uint8Array = fs.readFileSync(document)
+    const pdfDoc = await PDFDocument.load(uint8Array);
+    const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+    copiedPages.forEach((page) => mergedPdf.addPage(page));
+  }
+
+  // save merged file
+  fs.writeSync(fd, await mergedPdf.save());
 }
 
 /**
@@ -245,107 +274,51 @@ const generateNominationPDF = async function(data, callback) {
     if (err) throw err;
   });
 
-  // create formatted PDF document [PDFKit]
-  //const doc = await buildNominationDoc(data);
-
-  // these dns options are not needed if using an load balancer or ingress
-  // const options = {
-  //   family: 4,
-  //   hints: dns.ADDRCONFIG | dns.V4MAPPED
-  // }
-  // const { address: host } = await dns.lookup('puppeteer', options, (address) => {
-  //   return address
-  // })
-  const browser = await puppeteer.connect({
-    browserURL: `http://puppeteer:4000`
-  })
-
-  const page = await browser.newPage();
-  const headerHTML = `<div>Premier's Awards</div>`;
-  const footerHTML = `<div style=\"text-align: right;width: 297mm;font-size: 8px;\">
-                          <span style=\"margin-right: 1cm\">
-                              <span class=\"pageNumber\"></span> of <span class=\"totalPages\"></span>
-                          </span>
-                      </div>`;
+  // build nomination html string
   const nominationHTML = generateNominationHTML(data);
-  // To use custom fonts, need puppeteer to wait for network idle status
-  await page.setContent(nominationHTML, { waitUntil: 'networkidle2' });
 
-    await page.pdf({
-      path: nominationFilePath,
-      margin: { top: '100px', right: '50px', bottom: '100px', left: '50px' },
-      printBackground: true,
-      format: 'A4',
-      displayHeaderFooter: true,
-      headerTemplate: headerHTML,
-      footerTemplate: footerHTML
-    });
+  // convert html to pdf stream
+  const file = fs.createWriteStream(nominationFilePath);
+  const pdfConverterURL = process.env.PDF_CONVERT_URL;
+  const response = await axios({
+    method: 'post',
+    url: pdfConverterURL,
+    data: {html: nominationHTML, footer: 'Premier\'s Awards'},
+    contentType: 'application/json',
+    responseType: 'stream'
+  });
 
-  // const browser = await puppeteer.launch({
-  //   headless: true,
-  //   args: ["--no-sandbox", "--disable-setuid-sandbox"]
-  // });
-  // const page = await browser.newPage();
-  // const headerHTML = `<div>Premier's Awards</div>`;
-  // const footerHTML = `<div style=\"text-align: right;width: 297mm;font-size: 8px;\">
-  //                         <span style=\"margin-right: 1cm\">
-  //                             <span class=\"pageNumber\"></span> of <span class=\"totalPages\"></span>
-  //                         </span>
-  //                     </div>`;
-  // const nominationHTML = generateNominationHTML(data);
-  // // To use custom fonts, need puppeteer to wait for network idle status
-  // await page.setContent(nominationHTML, { waitUntil: 'networkidle2' });
-
-  // // Save PDF locally
-  // await page.pdf({
-  //   path: nominationFilePath,
-  //   margin: { top: '100px', right: '50px', bottom: '100px', left: '50px' },
-  //   printBackground: true,
-  //   format: 'A4',
-  //   displayHeaderFooter: true,
-  //   headerTemplate: headerHTML,
-  //   footerTemplate: footerHTML
-  // });
-
-
+  // save PDF file locally
+  const stream = response.data.pipe(file);
+  stream.on('finish', async () => {
 
   // get document page range for nomination portion
   // const range = doc.bufferedPageRange();
   // console.log('Pages to submission:', range.start + range.count);
 
-  // [1] create nomination metadata file stream and write to file
-  // const stream = fs.createWriteStream(nominationFilePath);
-  // doc.pipe(stream);
-  // doc.end();
-  // stream.on('error', (err)=>{callback(err)});
-  // stream.on('close', async ()=>{
     try {
-      // [2] merge attachments with main document
-      const merger = new PDFMerger();
-      // include submission PDF file
-      await merger.add(nominationFilePath);
-      // include file attachments
-      console.log(`Merging and saving PDF to ${nominationFilePath}`);
-      await Promise.all(
-        attachments.map(async (attachment) => {
-          const {file = {}} = attachment || {};
-          const {path = ''} = file || {};
-          await merger.add(path);
-        }));
-      //save under given name and reset the internal document
-      await merger.save(mergedFilePath);
+      // [2] merge attachments with main nomination document
+      console.log(`Merging and saving PDF to ${mergedFilePath}`);
+
+      let docs = [nominationFilePath];
+      docs.push.apply(docs, attachments.map(attachment => {
+        const {file = {}} = attachment || {};
+        const {path = ''} = file || {};
+        return path;
+      }));
+      await mergePDFDocuments(docs, mergedFilePath);
+
       // check if page count is exceeded
-      if (await getPageCount(mergedFilePath) > pageCountMaximum) {
-        console.error('Error: Page count limit exceeded');
-        return callback(Error('maxPagesExceeded'));
-      }
+      // if (await getPageCount(mergedFilePath) > pageCountMaximum) {
+      //   console.error('Error: Page count limit exceeded');
+      //   return callback(Error('maxPagesExceeded'));
+      // }
       console.log(`Merged PDF file ${mergedFilename} saved.`);
     } catch (err) {
       console.warn(err);
       return callback(Error('PDFCorrupted'));
     }
-  // })
-
+  });
   return [mergedFilePath, nominationFilePath];
 }
 exports.generateNominationPDF = generateNominationPDF;
