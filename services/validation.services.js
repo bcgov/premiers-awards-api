@@ -1,6 +1,6 @@
 /*!
  * Form validation services/utilities
- * File: validation.services.js
+ * File: util.services.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
@@ -13,7 +13,7 @@
 exports.genID = function() {
   const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let id = '';
-  for ( let i = 0; i < chars.length; i++ ) {
+  for ( let i = 0; i < 16; i++ ) {
     id += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return id;

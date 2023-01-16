@@ -1,13 +1,13 @@
 /*!
  * Admin router
- * File: admin.router.js
+ * File: admin.index.router.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
 
 const express = require('express');
 const router = express.Router();
-const authController = require('../controllers/users.admin.controller');
+const userController = require('../controllers/users.admin.controller');
 const settingsController = require("../controllers/settings.admin.controller");
 const {authorizeAdmin, authorizeSuperAdmin, authorizeData} = require('../services/auth.services');
 
@@ -15,14 +15,14 @@ const {authorizeAdmin, authorizeSuperAdmin, authorizeData} = require('../service
  * Admin user routes.
  */
 
-router.post('/users/register', authController.register);
-router.get('/users/login/', authController.login);
-router.get('/users/logout/', authController.logout);
-router.get('/users/info', authController.info);
-router.get('/users/view/', authorizeAdmin, authController.getAll);
-router.get('/users/view/:guid', authorizeAdmin, authController.get);
-router.post('/users/update/:guid', authorizeAdmin, authController.update);
-router.get('/users/delete/:guid', authorizeSuperAdmin, authController.remove);
+router.post('/users/register', userController.register);
+router.get('/users/login/', userController.login);
+router.get('/users/logout/', userController.logout);
+router.get('/users/info', userController.info);
+router.get('/users/view/', authorizeAdmin, userController.getAll);
+router.get('/users/view/:guid', authorizeAdmin, userController.get);
+router.post('/users/update/:guid', authorizeAdmin, userController.update);
+router.get('/users/delete/:guid', authorizeSuperAdmin, userController.remove);
 
 /**
  * Admin settings routes.

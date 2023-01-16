@@ -155,3 +155,13 @@ exports.checkSection = (section, category) => {
     }).length > 0;
 }
 
+/**
+ * check if category exists
+ * **/
+
+exports.checkCategory = (category) => {
+    return schemaData['categories'].filter(cat => {
+        return cat.value === category;
+    }).length > 0;
+}
+

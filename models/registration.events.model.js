@@ -20,6 +20,9 @@ const RegistrationSchema = new Schema(
     registrar: {
       type: String,
     },
+    users: {
+      type: Array,
+    },
     guests: [
       {
         type: Schema.Types.ObjectId,

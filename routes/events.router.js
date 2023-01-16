@@ -1,6 +1,6 @@
 /*!
  * Events: Registration router
- * File: events.router.js
+ * File: events.index.router.js
  * Copyright(c) 2022 BC Gov
  * MIT Licensed
  */
@@ -69,6 +69,11 @@ router.get(
   "/registrations",
   authorizeAdmin,
   registrationController.getAllRegistrations
+);
+router.get(
+  "/registrations/:id/all",
+  authorizeRegistrar,
+  registrationController.getUserRegistrations
 );
 router.get(
   "/registrations/:id/",

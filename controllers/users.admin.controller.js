@@ -62,7 +62,7 @@ exports.info = async (req, res, next) => {
 };
 
 /**
- * Find user by GUID
+ * Find user by GUID or IDIR
  *
  * @param req
  * @param res
@@ -73,7 +73,9 @@ exports.info = async (req, res, next) => {
 exports.get = async (req, res, next) => {
   try {
     const { guid = null } = req.params || {};
-    const user = await UserModel.findOne({ guid: guid });
+    const user =
+      (await UserModel.findOne({ guid: guid })) ||
+      (await UserModel.findOne({ username: guid }));
     return res.status(200).json(user);
   } catch (err) {
     console.error(err);
@@ -118,21 +120,24 @@ exports.update = async (req, res, next) => {
     // look up user
     const user = await UserModel.findOne({ guid: guid });
     if (!user) return next(Error("noRecord"));
-    const {id=''} = user || {};
+    const { id = "" } = user || {};
     const {
       roles = [],
-      username='',
-      firstname='',
-      lastname='',
-      email='',
+      username = "",
+      firstname = "",
+      lastname = "",
+      email = "",
     } = data || {};
 
     // restrict administrator role updates to super-administrator users
-    const adminRoles = ['super-administrator', 'administrator'];
-    if ( user.hasOwnProperty('roles') && !res.locals.user.roles.includes('super-administrator') &&
-        (  adminRoles.some(r => user.roles.includes(r)) || adminRoles.some(r => roles.includes(r)) )
+    const adminRoles = ["super-administrator", "administrator"];
+    if (
+      user.hasOwnProperty("roles") &&
+      !res.locals.user.roles.includes("super-administrator") &&
+      (adminRoles.some((r) => user.roles.includes(r)) ||
+        adminRoles.some((r) => roles.includes(r)))
     ) {
-      return next(new Error('noAuth'));
+      return next(new Error("noAuth"));
     }
 
     // update user data in collection
@@ -143,8 +148,10 @@ exports.update = async (req, res, next) => {
         firstname: firstname,
         lastname: lastname,
         email: email,
-        $set: { roles: roles }
-      }, opts);
+        $set: { roles: roles },
+      },
+      opts
+    );
 
     res.status(200).json(response);
   } catch (err) {
@@ -211,7 +218,7 @@ exports.login = async (req, res, next) => {
       email = "",
       roles = [],
       firstname = "",
-      lastname = ""
+      lastname = "",
     } = user || {};
 
     // successful login
@@ -223,7 +230,7 @@ exports.login = async (req, res, next) => {
         email: email,
         roles: roles,
         firstname: firstname,
-        lastname: lastname
+        lastname: lastname,
       },
     });
   } catch (err) {

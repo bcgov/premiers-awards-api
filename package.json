@@ -17,6 +17,7 @@
     "connect-history-api-fallback": "^1.6.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
+    "dom-parser": "^0.1.6",
     "express": "^4.17.1",
     "express-jwt": "^6.1.0",
     "express-mongo-sanitize": "^2.2.0",
@@ -25,19 +26,20 @@
     "jwt-decode": "^3.1.2",
     "mongoose": "^6.1.7",
     "multer": "^1.4.5-lts.1",
-    "pdf-merger-js": "^3.3.2",
+    "pdf-lib": "^1.17.1",
+    "pdf-merger-js": "^4.2.0",
     "pdf-parse": "^1.1.1",
-    "pdf2json": "^2.0.0",
     "pdfkit": "^0.13.0",
-    "pdfmake": "^0.2.4",
+    "puppeteer-core": "^19.5.1",
+    "sanitize-html": "^2.8.1",
     "winston": "^3.8.2"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "dotenv": "^16.0.3",
-    "nodemon": "^2.0.20",
     "jest": "^29.1.2",
-    "supertest": "^6.3.0",
-    "cross-env": "^7.0.3"
+    "nodemon": "^2.0.20",
+    "supertest": "^6.3.0"
   },
   "eslintConfig": {
     "root": true,

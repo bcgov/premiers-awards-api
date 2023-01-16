@@ -5,14 +5,21 @@
  * MIT Licensed
  */
 
-const PDFDocument = require("pdfkit");
-const PDFMerger = require('pdf-merger-js');
 const pdfParser = require('pdf-parse');
+const { PDFDocument } = require('pdf-lib')
 const fs = require('fs');
 const path = require('path');
 const schemaServices = require('./schema.services');
+const sanitizeHtml = require('sanitize-html');
+const axios = require("axios");
+
+/**
+ * Configuration settings
+ * */
 const dataPath = process.env.DATA_PATH;
-const attachmentCountLimit = 5;
+const allowedTags = [ 'div', 'p', 'br', 'b', 'i', 'em', 'strong', 'ol', 'ul', 'li', 'blockquote' ];
+const pageCountMaximum = 5;
+const customFontURL = 'https://fonts.googleapis.com/css?family=Roboto';
 
 /**
  * Count pages in PDF document
@@ -26,66 +33,63 @@ const getPageCount = async(filePath) => {
 }
 
 /**
- * @param doc - pdfkit document
- * @param spaceFromEdge - how far the right and left sides should be away from the edge (in px)
- * @param linesAboveAndBelow - how much space should be above and below the HR (in lines)
+ * Build HTML table as string
+ * @param items
+ * @return String
  */
-function addHorizontalRule(doc, spaceFromEdge = 0, linesAboveAndBelow = 0.5) {
-  doc.moveDown(linesAboveAndBelow);
 
-  doc.moveTo(spaceFromEdge, doc.y)
-    .lineTo(doc.page.width - spaceFromEdge, doc.y)
-    .stroke();
-
-  doc.moveDown(linesAboveAndBelow);
-
-  return doc
+const addHTMLTable = (items) => {
+  const rows = Object.keys(items)
+      .filter(key => items[key].hasOwnProperty('visible') && items[key].visible)
+      .map(key => {
+        const {label='', value=''} = items[key] || {};
+        return `<tr>
+                  <th>${label}</th>
+                  <td>${value}</td>
+                </tr>`
+        }).join(' ');
+  return `<table>
+            <tbody>
+                ${rows}
+            </tbody>
+        </table>`
 }
 
 /**
- * @param doc - pdfkit document
- * @param title
- * @param subtitle
+ * Build HTML unordered list as string
+ * @param items
+ * @return String
  */
 
-function addTitle(doc, title, subtitle) {
-  doc.fontSize(24);
-  doc.font('Times-Roman').text(title, {paragraphGap: 15});
-  doc.fontSize(18);
-  doc.font('Helvetica-Bold').text(subtitle, {paragraphGap: 15});
-  addHorizontalRule(doc, 0, 1);
-  return doc;
+const addHTMLUnorderedList = (items) => {
+  return items.length > 0 ? items.map((item, index) => {
+    return `${index === 0 ? `<ul>` : ''}<li>${item}</li>${index === items.length - 1 ? `</ul>` : ''}`;
+  }).join(' ') : '';
 }
 
 /**
- * @param doc - pdfkit document
- * @param header
- * @param text
+ * Build HTML ordered list as string
+ * @param items
+ * @return String
  */
 
-function addItem(doc, header, text) {
-  doc.fontSize(14);
-  doc.font('Helvetica-Bold').text(header, {paragraphGap: 10});
-  doc.fontSize(12);
-  doc.font('Helvetica').text(text, {paragraphGap: 15});
-  doc.moveDown(1);
-  return doc;
+const addHTMLOrderedList = (items) => {
+  return items.length > 0 ? items.map((item, index) => {
+    return `${index === 0 ? `<ol>` : ''}<li>${item}</li>${index === items.length - 1 ? `</ol>` : ''}`;
+  }).join(' ') : '';
 }
 
 /**
- * Generate PDF document from JSON data
- *
- * @returns {Object}
+ * @param data - nomination data
+ * @return doc - pdfkit document
  */
 
-const generateNominationPDF = async function(jsonData, callback) {
+const generateNominationHTML = function(data) {
 
   // destructure nomination data
   const {
-    _id='',
     seq='',
     category='',
-    year='',
     organization='',
     title='',
     nominee='',
@@ -94,17 +98,175 @@ const generateNominationPDF = async function(jsonData, callback) {
     nominators= [],
     evaluation= {},
     attachments= []
-  } = jsonData || {};
+  } = data || {};
 
+  // creat unique sequence submission ID
+  const submissionID = ('00000' + parseInt(seq)).slice(-5);
+
+  // add nominee full name (if exists)
+  const {firstname = '', lastname = '' } = nominee || {};
+
+  const nominationTableItems = [
+    {
+      label: 'Created',
+      value: Date().toString(),
+      visible: true
+    },
+    {
+      label: 'Application Category',
+      value: schemaServices.lookup('categories', category),
+      visible: true
+    },
+    {
+      label: 'Name of Ministry or eligible organization sponsoring this application',
+      value: schemaServices.lookup('organizations', organization),
+      visible: true
+    },
+    {
+      label: 'Nomination Title',
+      value: title,
+      visible: !!title
+    },
+    {
+      label: 'Nominee',
+      value: `${firstname} ${lastname}`,
+      visible: firstname && lastname
+    },
+    {
+      label: 'Number of Nominees',
+      value: String(nominees),
+      visible: nominees > 0
+    },
+    {
+      label: 'Partners',
+      value: addHTMLUnorderedList(partners.map(partner => {
+        const {organization = ''} = partner || {};
+        return organization;
+      })),
+      visible: partners.length > 0
+    },
+    {
+      label: 'Nominators',
+      value: addHTMLUnorderedList(nominators.map(nominator => {
+        const {firstname='', lastname='', title='', email='' } = nominator || {};
+        return `${firstname} ${lastname}${title ? ', ' + title : ''}${email ? ', ' + email : ''}`;
+      })),
+      visible: nominators.length > 0
+    },
+    {
+      label: 'Attachments',
+      value: addHTMLOrderedList(attachments.map((attachment) => {
+        const {label = '', description='', file = {}} = attachment || {};
+        const {originalname='Attachment'} = file || {};
+        return `${label ? label : originalname}${description ? ': ' + description : ''}`;
+      })),
+      visible: attachments.length > 0
+    },
+    {
+      label: 'Evaluation Considerations',
+      value: Object.keys(evaluation).map(section => {
+        // confirm section is included in category
+        if (schemaServices.checkSection(section, category)) {
+          // Allow only a super restricted set of tags and attributes
+          const html = sanitizeHtml(evaluation[section], {
+            allowedTags: allowedTags,
+            allowedIframeHostnames: ['www.youtube.com']
+          });
+          return `<h3>${schemaServices.lookup('evaluationSections', section)}</h3><div>${html}</div>`;
+        }
+      }).join(' '),
+      visible: Object.keys(evaluation).length > 0
+    },
+  ];
+
+  // create html template for nomination
+  return `<!DOCTYPE html><html lang="en/us">
+            <head>
+            <title>${title}</title>
+            <style>
+                /* @import url(${customFontURL}); */
+                body {
+                  font-family: helvetica, sans-serif;
+                }
+                  main {display: flex;}
+                  main > * {border: 1px solid;}
+                  table {
+                      border-collapse: collapse; 
+                      font-family: inherit, helvetica, sans-serif
+                  }
+                  td, th {
+                      border-bottom: 1px solid #888888;
+                      padding: 10px;
+                      min-width: 200px;
+                      background: white;
+                      box-sizing: border-box;
+                      text-align: left;
+                      vertical-align: top;
+                  }
+                  th {
+                    background: #DDDDDD;
+                  }
+              </style>
+            </head>
+        <body>
+            <h1>Premier's Awards Nomination</h1>
+            <h2>Submission ID ${submissionID}</h2>
+            ${addHTMLTable(nominationTableItems)}
+        </body>
+    </html>`;
+}
+
+
+/**
+ * Merge PDF documents into single PDF document
+ *
+ * @param {Array} documents
+ * @param {String} filePath
+ * @returns {Object}
+ */
+
+async function mergePDFDocuments(documents, filePath) {
+  const mergedPdf = await PDFDocument.create();
+  const fd = fs.openSync(filePath, "w+");
+
+  for (let document of documents) {
+    // Use pdf-lib static load (See: https://pdf-lib.js.org/docs/api/classes/pdfdocument#static-load)
+    const uint8Array = fs.readFileSync(document)
+    const pdfDoc = await PDFDocument.load(uint8Array);
+    const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+    copiedPages.forEach((page) => mergedPdf.addPage(page));
+  }
+
+  // save merged file
+  fs.writeSync(fd, await mergedPdf.save());
+}
+
+/**
+ * Generate PDF document from JSON data
+ *
+ * @param {Object} data
+ * @param {Function} callback
+ * @returns {Object}
+ */
+
+const generateNominationPDF = async function(data, callback) {
+
+  // destructure nomination data
+  const {
+    _id='',
+    seq='',
+    attachments= []
+  } = data || {};
 
   // - use unique sequence number to label file
   // - pad sequence with 00000
-  const id = ('00000' + parseInt(seq)).slice(-5);
-  const categoryLabel = schemaServices.lookup('categories', category);
-  const filename = `submission-${_id}.pdf`;
-  const dirPath = path.join(dataPath, 'generated', String(year));
-  const submissionFilePath = path.join(dirPath, filename);
-  const mergedFilename = `nomination-${id}.pdf`;
+  // - creates (1) nomination PDF and (2) merged PDF
+  const fileId = ('00000' + parseInt(seq)).slice(-5);
+  const basename = `${fileId}-nomination`;
+  const nominationFilename = `${basename}.pdf`;
+  const dirPath = path.join(dataPath, 'generated', _id.toString());
+  const nominationFilePath = path.join(dirPath, nominationFilename);
+  const mergedFilename = `${basename}-merged.pdf`;
   const mergedFilePath = path.join(dirPath, mergedFilename);
 
   // ensure directory path exists
@@ -112,136 +274,52 @@ const generateNominationPDF = async function(jsonData, callback) {
     if (err) throw err;
   });
 
-  // create new document
-  let doc = new PDFDocument({
-    pdfVersion: '1.5',
-    lang: 'en-CA',
-    tagged: true,
-    displayTitle: true,
-    margin: 30,
-    size: 'A4' });
-  doc.info['Title'] = 'Premier\'s Awards Nominations';
-  doc.info['Author'] = 'BC Gov (2022)';
+  // build nomination html string
+  const nominationHTML = generateNominationHTML(data);
 
-  // format PDF content
-
-  // profile data
-  addTitle(doc, 'Premier\'s Awards Nomination', `Submission ID ${id}-${year}`);
-  addItem(doc, 'Application Category', `${categoryLabel} (${year})`);
-  addItem(doc, 'Name of Ministry or eligible organization sponsoring this application', schemaServices.lookup('organizations', organization));
-
-  if (title) {
-    addItem(doc, 'Nomination Title', title);
-  }
-
-  // Nominee
-  if (nominee.hasOwnProperty('firstname') && nominee.firstname && nominee.hasOwnProperty('lastname') && nominee.lastname) {
-    doc.fontSize(14);
-    doc.font('Helvetica-Bold').text(`Nominee`, {paragraphGap: 15});
-    const {firstname = '', lastname = '' } = nominee || {};
-    doc.fontSize(12);
-    doc.font('Helvetica').text(`${firstname} ${lastname}`, {paragraphGap: 10});
-    doc.moveDown(1);
-  }
-
-  // Nominees (count)
-  if (nominees > 0) {
-    addItem(doc, 'Number of Nominees', String(nominees));
-  }
-
-  // Partners
-  if (partners.length > 0) {
-    doc.fontSize(14);
-    doc.font('Helvetica-Bold').text(`Partners`, {paragraphGap: 15});
-    partners.forEach(partner => {
-      const { organization = '' } = partner || {};
-      doc.fontSize(12);
-      doc.font('Helvetica').text(organization, {paragraphGap: 10});
-    });
-    doc.moveDown(1);
-  }
-
-  // Nominators
-  doc.fontSize(14);
-  doc.font('Helvetica-Bold').text(`Nominators`, {paragraphGap: 15});
-  nominators.forEach(nominator => {
-    const {firstname = '', lastname = '', title = '', email='' } = nominator || {};
-    doc.fontSize(12);
-    doc.font('Helvetica').text(
-      `${firstname} ${lastname}${title ? ', ' + title : ''}${email ? ', ' + email : ''}`
-      , {paragraphGap: 10}
-    );
+  // convert html to pdf stream
+  const file = fs.createWriteStream(nominationFilePath);
+  const pdfConverterURL = process.env.PDF_CONVERT_URL;
+  const response = await axios({
+    method: 'post',
+    url: pdfConverterURL,
+    data: {html: nominationHTML, footer: 'Premier\'s Awards'},
+    contentType: 'application/json',
+    responseType: 'stream'
   });
-  doc.moveDown(1);
 
-  // Attachments
-  doc.fontSize(14);
-  doc.font('Helvetica-Bold').text(`Attachments`, {paragraphGap: 15});
-  attachments.forEach(attachment => {
-    const {label = '', description=''} = attachment || {};
-    const {file = {}} = attachment || {};
-    const {originalname='Attachment'} = file || {};
-    doc.fontSize(12);
-    doc.font('Helvetica').text(
-      `${label ? label : originalname}${description ? ': ' + description : ''}`
-      , {paragraphGap: 10}
-    );
-  });
-  doc.moveDown(1);
+  // save PDF file locally
+  const stream = response.data.pipe(file);
+  stream.on('finish', async () => {
 
-  // Evaluation considerations
-  doc.fontSize(16);
-  doc.font('Helvetica-Bold').text(`Evaluation Considerations`, {paragraphGap: 15});
-  await Promise.all(
-    Object.keys(evaluation).map(section => {
-      // confirm section is included in category
-      if (schemaServices.checkSection(section, category)) {
-        addItem(
-          doc,
-          `${schemaServices.lookup('evaluationSections', section)}`, evaluation[section] || 'n/a');
-      }
-    })
-  );
+  // get document page range for nomination portion
+  // const range = doc.bufferedPageRange();
+  // console.log('Pages to submission:', range.start + range.count);
 
-  // count pages in evaluation portion
-  const range = doc.bufferedPageRange();
-  console.log('Pages to submission:', range.start + range.count);
-
-  // create file stream and write to file
-  const stream = fs.createWriteStream(submissionFilePath);
-  doc.pipe(stream);
-  doc.end();
-  stream.on('error', (err)=>{callback(err)});
-  stream.on('close', async ()=>{
     try {
-      // merge attachments with main document
-      const merger = new PDFMerger();
-      // include submission PDF file
-      merger.add(submissionFilePath);
-      // include file attachments
-      console.log('Starting PDF merge...');
-      await Promise.all(
-        attachments.map(async (attachment) => {
-          const {file = {}} = attachment || {};
-          const {path = ''} = file || {};
-          merger.add(path);
-        }));
-      console.log('Saving PDF merge...');
-      //save under given name and reset the internal document
-      await merger.save(mergedFilePath);
-      // // check if page count is exceeded
-      if (await getPageCount(mergedFilePath) - (range.start + range.count) > attachmentCountLimit) {
-        console.log('Page count limit exceeded');
-        return null;
-      }
+      // [2] merge attachments with main nomination document
+      console.log(`Merging and saving PDF to ${mergedFilePath}`);
+
+      let docs = [nominationFilePath];
+      docs.push.apply(docs, attachments.map(attachment => {
+        const {file = {}} = attachment || {};
+        const {path = ''} = file || {};
+        return path;
+      }));
+      await mergePDFDocuments(docs, mergedFilePath);
+
+      // check if page count is exceeded
+      // if (await getPageCount(mergedFilePath) > pageCountMaximum) {
+      //   console.error('Error: Page count limit exceeded');
+      //   return callback(Error('maxPagesExceeded'));
+      // }
       console.log(`Merged PDF file ${mergedFilename} saved.`);
     } catch (err) {
       console.warn(err);
-      return null;
+      return callback(Error('PDFCorrupted'));
     }
-  })
-
-  return mergedFilePath;
+  });
+  return [mergedFilePath, nominationFilePath];
 }
 exports.generateNominationPDF = generateNominationPDF;
 
