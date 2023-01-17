@@ -106,10 +106,13 @@ const generateNominationHTML = function(data) {
   // add nominee full name (if exists)
   const {firstname = '', lastname = '' } = nominee || {};
 
+  // get created date
+  const created = new Date().toLocaleString("en-CA", {timeZone: "America/Vancouver"});
+
   const nominationTableItems = [
     {
       label: 'Created',
-      value: Date().toString(),
+      value: created.toString(),
       visible: true
     },
     {
