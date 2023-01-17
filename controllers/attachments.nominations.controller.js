@@ -55,7 +55,7 @@ exports.upload = async (req, res, next) => {
     if (submitted) return next(Error('alreadySubmitted'));
 
     // check number of attachments not exceeded
-    if (nomination.attachments.length > maxAttachments) return next(Error('maxAttachmentsExceeded'));
+    if (nomination.attachments.length >= maxAttachments) return next(Error('maxAttachmentsExceeded'));
 
     // update attachment metadata
     // - file object includes multer metadata

@@ -301,7 +301,7 @@ const generateNominationPDF = async function(data, callback) {
 
     try {
       // [2] merge attachments with main nomination document
-      console.log(`Merging and saving PDF to ${mergedFilePath}`);
+      // console.log(`Merging and saving PDF to ${mergedFilePath}`);
 
       let docs = [nominationFilePath];
       docs.push.apply(docs, attachments.map(attachment => {
