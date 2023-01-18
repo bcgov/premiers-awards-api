@@ -5,8 +5,7 @@
  * MIT Licensed
  */
 
-const pdfParser = require('pdf-parse');
-const { PDFDocument } = require('pdf-lib')
+const { PDFDocument } = require('pdf-lib');
 const fs = require('fs');
 const path = require('path');
 const schemaServices = require('./schema.services');
@@ -20,17 +19,6 @@ const dataPath = process.env.DATA_PATH;
 const allowedTags = [ 'div', 'p', 'br', 'b', 'i', 'em', 'strong', 'ol', 'ul', 'li', 'blockquote' ];
 const pageCountMaximum = 5;
 const customFontURL = 'http://localhost:5000/static/css/BCSans.css';
-
-/**
- * Count pages in PDF document
- * @param filePath
- */
-
-const getPageCount = async(filePath) => {
-  let dataBuffer = fs.readFileSync(filePath);
-  const data = await pdfParser(dataBuffer);
-  return data.numrender > data.numpages ? data.numrender : data.numpages;
-}
 
 /**
  * Build HTML table as string
