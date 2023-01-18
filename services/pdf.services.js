@@ -19,7 +19,7 @@ const axios = require("axios");
 const dataPath = process.env.DATA_PATH;
 const allowedTags = [ 'div', 'p', 'br', 'b', 'i', 'em', 'strong', 'ol', 'ul', 'li', 'blockquote' ];
 const pageCountMaximum = 5;
-const customFontURL = 'https://fonts.googleapis.com/css?family=Roboto';
+const customFontURL = 'http://localhost:5000/static/css/BCSans.css';
 
 /**
  * Count pages in PDF document
@@ -173,7 +173,6 @@ const generateNominationHTML = function(data) {
           // Allow only a super restricted set of tags and attributes
           const html = sanitizeHtml(evaluation[section], {
             allowedTags: allowedTags,
-            allowedIframeHostnames: ['www.youtube.com']
           });
           return `<h3>${schemaServices.lookup('evaluationSections', section)}</h3><div>${html}</div>`;
         }
@@ -186,16 +185,17 @@ const generateNominationHTML = function(data) {
   return `<!DOCTYPE html><html lang="en/us">
             <head>
             <title>${title}</title>
+            <link href='${customFontURL}' rel='stylesheet' type='text/css'>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <style>
-                /* @import url(${customFontURL}); */
                 body {
-                  font-family: helvetica, sans-serif;
+                  font-family: 'BCSans', Helvetica, sans-serif;
                 }
                   main {display: flex;}
                   main > * {border: 1px solid;}
                   table {
                       border-collapse: collapse; 
-                      font-family: inherit, helvetica, sans-serif
+                      font-family: 'BCSans', Helvetica, sans-serif
                   }
                   td, th {
                       border-bottom: 1px solid #888888;
@@ -235,7 +235,7 @@ async function mergePDFDocuments(documents, filePath) {
   for (let document of documents) {
     // Use pdf-lib static load (See: https://pdf-lib.js.org/docs/api/classes/pdfdocument#static-load)
     const uint8Array = fs.readFileSync(document)
-    const pdfDoc = await PDFDocument.load(uint8Array);
+    const pdfDoc = await PDFDocument.load(uint8Array, { ignoreEncryption: true });
     const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
     copiedPages.forEach((page) => mergedPdf.addPage(page));
   }
