@@ -39,7 +39,7 @@ AttachmentSchema.pre('deleteOne', { document: false, query: true }, async functi
     const attachment = await this.model.findOne(this.getFilter());
     await NominationModel.updateOne(
         {_id: attachment.nomination},
-        { $pull: { attachments: { $eq: attachment._id } } }
+        { $pull: { attachments: { $in: [attachment._id] } } }
     );
 });
 
