@@ -11,6 +11,7 @@
  */
 
 const schemaData = {
+    "year": 2023,
     "status": [
         {value: 'draft', text: 'Draft'},
         {value: 'submitted', text: 'Submitted'}

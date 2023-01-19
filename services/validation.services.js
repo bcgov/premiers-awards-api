@@ -11,12 +11,7 @@
  * **/
 
 exports.genID = function() {
-  const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let id = '';
-  for ( let i = 0; i < 16; i++ ) {
-    id += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return id;
+  return new Date().getTime().toString();
 }
 
 /**

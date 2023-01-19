@@ -161,6 +161,8 @@ exports.update = async (req, res, next) => {
     const nomination = await NominationModel.findById(id);
     if (!nomination) return next(Error('invalidInput'));
 
+    console.log(data)
+
     // reject updates to submitted nominations
     const {submitted=false} = nomination || {};
     if ( submitted )

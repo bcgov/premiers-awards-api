@@ -9,6 +9,15 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 /**
+ * Organization schema
+ */
+
+// const OrganizationSchema = new Schema({
+//     key    : String,
+//     label  : String
+// });
+
+/**
  * Partner schema
  */
 
@@ -75,10 +84,10 @@ const NominationSchema = new Schema(
                 default: '',
             },
         },
-        organization: {
+        organizations: [{
             type: String,
             required: function() { return this.submitted }
-        },
+        }],
         title: {
             type: String
         },

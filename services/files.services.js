@@ -11,7 +11,7 @@ const path = require('path');
 const AdmZip = require("adm-zip");
 const multer = require('multer');
 const AttachmentModel = require("../models/attachment.nominations.model");
-const {genID} = require("./validation.services");
+const uuid = require('uuid');
 
 const dataPath = process.env.DATA_PATH
 const acceptedMIMETypes = ['application/pdf'];
@@ -42,17 +42,20 @@ const storage = multer.diskStorage({
       callback(null, destination);
     });
   },
-  // pass function that generates unique filename to avoid overwriting files
+  /**
+   * Pass function that generates unique filename to avoid overwriting files
+  */
   filename: (req, file, callback) => {
-    const fileID = genID();
-    callback(null, `${fileID}_${file.originalname}`);
+    callback(null, `attachment_${uuid.v1()}_${file.originalname}`);
   }
 });
 
 // restrict files by MIME types.
 const fileFilter = function(req, file, next) {
+  // exit on empty file
   if(!file) next();
 
+  // check for accepted MIME type
   const accepted = acceptedMIMETypes.includes(file.mimetype);
   if ( accepted ) {
     console.log('File attachment file format is accepted.');
@@ -160,7 +163,7 @@ const createNominationPackage = async function(nominations) {
     const { _id='', seq='', filePaths={} } = nomination || {};
 
     // - use unique sequence number to label nomination folder
-    const packageDir = ('00000' + parseInt(seq)).slice(-5);
+    const packageDir = genFileID(nomination);
 
     // add nomination and merged files
     zip.addLocalFile(filePaths.nomination, packageDir);
@@ -200,3 +203,4 @@ const fileExists = async function (filePath) {
     }
 }
 exports.fileExists = fileExists
+

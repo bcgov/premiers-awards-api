@@ -17,8 +17,44 @@ const axios = require("axios");
  * */
 const dataPath = process.env.DATA_PATH;
 const allowedTags = [ 'div', 'p', 'br', 'b', 'i', 'em', 'strong', 'ol', 'ul', 'li', 'blockquote' ];
-const pageCountMaximum = 5;
+// const pageCountMaximum = 5;
 const customFontURL = 'http://localhost:5000/static/css/BCSans.css';
+
+
+/**
+ * Generate file ID for nomination packages.
+ *     e.g., '<SEQ>-<YEAR>_<CATEGORY_NAME>_<NOMINATION_TITLE>_<ORGANIZATION>'
+ *
+ * @param {Object} data
+ * @return String
+ */
+
+const genFileID = function (data) {
+  // destructure nomination data
+  const {
+    seq='',
+    category='',
+    organizations=[],
+    title='',
+    nominee=''
+  } = data || {};
+
+  // build raw file ID string
+  const year = schemaServices.get('year').toString();
+  const {firstname = '', lastname = '' } = nominee || {};
+  const label = title.slice(0, 15) || `${firstname}_${lastname}`.slice(0, 15);
+  const organization = (organizations || []).map(org => {
+    return schemaServices.lookup('organizations', org).slice(0, 10);
+  }).join('_')
+  // convert file ID to slug
+  const fileID = `${category}_${label}_${organization}`
+      .toLowerCase()
+      .replace(/[^\w ]+/g, '_')
+      .replace(/ +/g, '_');
+  // include sequence and year
+  return `${('0000' + parseInt(seq)).slice(-5)}-${year.slice(2, 4)}_${fileID}`;
+}
+exports.genFileID = genFileID
 
 /**
  * Build HTML table as string
@@ -78,7 +114,7 @@ const generateNominationHTML = function(data) {
   const {
     seq='',
     category='',
-    organization='',
+    organizations='',
     title='',
     nominee='',
     nominees='',
@@ -110,7 +146,9 @@ const generateNominationHTML = function(data) {
     },
     {
       label: 'Name of Ministry or eligible organization sponsoring this application',
-      value: schemaServices.lookup('organizations', organization),
+      value: addHTMLOrderedList(organizations.map(organization => {
+        return schemaServices.lookup('organizations', organization);
+      })),
       visible: true
     },
     {
@@ -245,14 +283,13 @@ const generateNominationPDF = async function(data, callback) {
   // destructure nomination data
   const {
     _id='',
-    seq='',
     attachments= []
   } = data || {};
 
   // - use unique sequence number to label file
   // - pad sequence with 00000
   // - creates (1) nomination PDF and (2) merged PDF
-  const fileId = ('00000' + parseInt(seq)).slice(-5);
+  const fileId = genFileID(data);
   const basename = `${fileId}-nomination`;
   const nominationFilename = `${basename}.pdf`;
   const dirPath = path.join(dataPath, 'generated', _id.toString());
