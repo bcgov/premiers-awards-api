@@ -12,6 +12,7 @@ const AdmZip = require("adm-zip");
 const multer = require('multer');
 const AttachmentModel = require("../models/attachment.nominations.model");
 const uuid = require('uuid');
+const {genFileID} = require("./pdf.services");
 
 const dataPath = process.env.DATA_PATH
 const acceptedMIMETypes = ['application/pdf'];
