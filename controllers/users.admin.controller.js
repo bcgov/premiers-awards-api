@@ -37,7 +37,7 @@ exports.register = async (req, res, next) => {
       lastname: lastname,
       email: email,
     });
-    res.status(201).json(user);
+    res.status(200).json(user);
   } catch (err) {
     return next(err);
   }

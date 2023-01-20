@@ -20,7 +20,6 @@ const RegistrationModel = require("../models/registration.events.model.js");
 
 const createName = async function () {
   const result = await TableCounterModel.findById({ _id: "tablename" });
-  console.log(result);
   const alphaArray = result.alpha;
 
   const alphabetTables = Array.from("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
@@ -223,8 +222,6 @@ exports.updateTable = async (req, res, next) => {
   try {
     const data = req.body;
     const id = req.params.id;
-
-    console.log("!!!", id, data);
 
     // look up guest exists
     const table = await TableModel.findById(id);

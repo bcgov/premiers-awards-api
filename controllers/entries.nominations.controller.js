@@ -16,7 +16,7 @@ const {checkCategory} = require("../services/schema.services");
 const mongoose = require('mongoose');
 
 // limit number of draft nomination submissions
-const maxNumberOfDrafts = 10;
+const maxNumberOfDrafts = 12;
 
 /**
  * Get nomination data by ID.
@@ -108,7 +108,7 @@ exports.create = async (req, res, next) => {
 
       // check if user is at limit for number of drafts
       const currentNominations = await NominationModel.find({guid: guid}) || [];
-      if (currentNominations.length > maxNumberOfDrafts) return next(new Error('maxDraftsExceeded'));
+      if (currentNominations.length >= maxNumberOfDrafts) return next(new Error('maxDraftsExceeded'));
 
       // init nomination
       const data = {
@@ -160,6 +160,8 @@ exports.update = async (req, res, next) => {
     // look up nomination exists
     const nomination = await NominationModel.findById(id);
     if (!nomination) return next(Error('invalidInput'));
+
+    console.log(data)
 
     // reject updates to submitted nominations
     const {submitted=false} = nomination || {};

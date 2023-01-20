@@ -5,8 +5,7 @@
  * MIT Licensed
  */
 
-const pdfParser = require('pdf-parse');
-const { PDFDocument } = require('pdf-lib')
+const { PDFDocument } = require('pdf-lib');
 const fs = require('fs');
 const path = require('path');
 const schemaServices = require('./schema.services');
@@ -18,19 +17,44 @@ const axios = require("axios");
  * */
 const dataPath = process.env.DATA_PATH;
 const allowedTags = [ 'div', 'p', 'br', 'b', 'i', 'em', 'strong', 'ol', 'ul', 'li', 'blockquote' ];
-const pageCountMaximum = 5;
-const customFontURL = 'https://fonts.googleapis.com/css?family=Roboto';
+// const pageCountMaximum = 5;
+const customFontURL = 'http://localhost:5000/static/css/BCSans.css';
+
 
 /**
- * Count pages in PDF document
- * @param filePath
+ * Generate file ID for nomination packages.
+ *     e.g., '<SEQ>-<YEAR>_<CATEGORY_NAME>_<NOMINATION_TITLE>_<ORGANIZATION>'
+ *
+ * @param {Object} data
+ * @return String
  */
 
-const getPageCount = async(filePath) => {
-  let dataBuffer = fs.readFileSync(filePath);
-  const data = await pdfParser(dataBuffer);
-  return data.numrender > data.numpages ? data.numrender : data.numpages;
+const genFileID = function (data) {
+  // destructure nomination data
+  const {
+    seq='',
+    category='',
+    organizations=[],
+    title='',
+    nominee=''
+  } = data || {};
+
+  // build raw file ID string
+  const year = schemaServices.get('year').toString();
+  const {firstname = '', lastname = '' } = nominee || {};
+  const label = title.slice(0, 15) || `${firstname}_${lastname}`.slice(0, 15);
+  const organization = (organizations || []).map(org => {
+    return schemaServices.lookup('organizations', org).slice(0, 10);
+  }).join('_')
+  // convert file ID to slug
+  const fileID = `${category}_${label}_${organization}`
+      .toLowerCase()
+      .replace(/[^\w ]+/g, '_')
+      .replace(/ +/g, '_');
+  // include sequence and year
+  return `${('0000' + parseInt(seq)).slice(-5)}-${year.slice(2, 4)}_${fileID}`;
 }
+exports.genFileID = genFileID
 
 /**
  * Build HTML table as string
@@ -90,7 +114,7 @@ const generateNominationHTML = function(data) {
   const {
     seq='',
     category='',
-    organization='',
+    organizations='',
     title='',
     nominee='',
     nominees='',
@@ -106,10 +130,13 @@ const generateNominationHTML = function(data) {
   // add nominee full name (if exists)
   const {firstname = '', lastname = '' } = nominee || {};
 
+  // get created date
+  const created = new Date().toLocaleString("en-CA", {timeZone: "America/Vancouver"});
+
   const nominationTableItems = [
     {
       label: 'Created',
-      value: Date().toString(),
+      value: created.toString(),
       visible: true
     },
     {
@@ -119,7 +146,9 @@ const generateNominationHTML = function(data) {
     },
     {
       label: 'Name of Ministry or eligible organization sponsoring this application',
-      value: schemaServices.lookup('organizations', organization),
+      value: addHTMLOrderedList(organizations.map(organization => {
+        return schemaServices.lookup('organizations', organization);
+      })),
       visible: true
     },
     {
@@ -170,7 +199,6 @@ const generateNominationHTML = function(data) {
           // Allow only a super restricted set of tags and attributes
           const html = sanitizeHtml(evaluation[section], {
             allowedTags: allowedTags,
-            allowedIframeHostnames: ['www.youtube.com']
           });
           return `<h3>${schemaServices.lookup('evaluationSections', section)}</h3><div>${html}</div>`;
         }
@@ -183,16 +211,17 @@ const generateNominationHTML = function(data) {
   return `<!DOCTYPE html><html lang="en/us">
             <head>
             <title>${title}</title>
+            <link href='${customFontURL}' rel='stylesheet' type='text/css'>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <style>
-                /* @import url(${customFontURL}); */
                 body {
-                  font-family: helvetica, sans-serif;
+                  font-family: 'BCSans', Helvetica, sans-serif;
                 }
                   main {display: flex;}
                   main > * {border: 1px solid;}
                   table {
                       border-collapse: collapse; 
-                      font-family: inherit, helvetica, sans-serif
+                      font-family: 'BCSans', Helvetica, sans-serif
                   }
                   td, th {
                       border-bottom: 1px solid #888888;
@@ -232,7 +261,7 @@ async function mergePDFDocuments(documents, filePath) {
   for (let document of documents) {
     // Use pdf-lib static load (See: https://pdf-lib.js.org/docs/api/classes/pdfdocument#static-load)
     const uint8Array = fs.readFileSync(document)
-    const pdfDoc = await PDFDocument.load(uint8Array);
+    const pdfDoc = await PDFDocument.load(uint8Array, { ignoreEncryption: true });
     const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
     copiedPages.forEach((page) => mergedPdf.addPage(page));
   }
@@ -254,14 +283,13 @@ const generateNominationPDF = async function(data, callback) {
   // destructure nomination data
   const {
     _id='',
-    seq='',
     attachments= []
   } = data || {};
 
   // - use unique sequence number to label file
   // - pad sequence with 00000
   // - creates (1) nomination PDF and (2) merged PDF
-  const fileId = ('00000' + parseInt(seq)).slice(-5);
+  const fileId = genFileID(data);
   const basename = `${fileId}-nomination`;
   const nominationFilename = `${basename}.pdf`;
   const dirPath = path.join(dataPath, 'generated', _id.toString());
@@ -298,7 +326,7 @@ const generateNominationPDF = async function(data, callback) {
 
     try {
       // [2] merge attachments with main nomination document
-      console.log(`Merging and saving PDF to ${mergedFilePath}`);
+      // console.log(`Merging and saving PDF to ${mergedFilePath}`);
 
       let docs = [nominationFilePath];
       docs.push.apply(docs, attachments.map(attachment => {

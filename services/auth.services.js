@@ -10,6 +10,7 @@ const UserModel = require('../models/user.admin.model');
 const NominationModel = require('../models/entry.nominations.model');
 const AttachmentModel = require('../models/attachment.nominations.model');
 const {validateEmail} = require('./validation.services');
+const mongoose = require("mongoose");
 require('dotenv').config();
 
 const nodeEnv = process.env.NODE_ENV;
@@ -109,6 +110,48 @@ exports.authorizeData = async (req, res, next) => {
 }
 
 /**
+ * Authorize user access based on ID submitted.
+ *
+ * @param req
+ * @param res
+ * @param {Array} allowedRoles
+ * @src public
+ */
+
+exports.authorizeMultiData = async (req, res, next) => {
+  try {
+    // bypass for administrators
+    if (res.locals.user.roles.includes('administrator') || res.locals.user.roles.includes('super-administrator')) {
+      return next();
+    }
+
+    // retrieve nomination IDs
+    let { ids = '[]' } = req.query || {};
+    // convert ID strings to BSON
+    ids = JSON.parse(ids).map(id => {
+      return mongoose.Types.ObjectId(id)
+    });
+
+    // retrieve nominations data and validate
+    const nominations = await NominationModel.find({'_id': { $in: ids }});
+
+    let isAuth = true;
+    await Promise.all(nominations.map( async(nomination) => {
+      const {guid=''} = nomination || {};
+      if (res.locals.user.guid !== guid) {
+        isAuth = false;
+      }
+    }));
+
+    // check if authorized to export all nominations by GUID
+    return isAuth ? next(): next(new Error('noAuth'));
+
+  } catch (err) {
+    return next(err)
+  }
+}
+
+/**
  * Authorize user access based on attachment ID submitted.
  *
  * @param req
@@ -119,15 +162,18 @@ exports.authorizeData = async (req, res, next) => {
 
 exports.authorizeAttachment = async (req, res, next) => {
   try {
+    // bypass for administrators
     if (res.locals.user.roles.includes('administrator') || res.locals.user.roles.includes('super-administrator')) {
       return next();
     }
+    // reject unregistered users
+    if (!res.locals.user.roles.includes('nominator')) return next(new Error('noAuth'));
+    // lookup attachment
     const {id = null} = req.params || {};
     const attachment = await AttachmentModel.findById(id);
     const nomination = await NominationModel.findById(attachment.nomination || '');
-    const { guid='', roles=[] } = nomination || {};
-    // reject unregistered users
-    if (roles.length === 0 || roles.includes('inactive')) return next(new Error('noAuth'));
+    const { guid='' } = nomination || {};
+    // check GUID matches attachment owner GUID
     if (res.locals.user.guid === guid) {
       return next();
     }
@@ -205,6 +251,17 @@ exports.authorizeRegistrar = async (req, res, next) => {
  * @param {Array} allowedRoles
  * @src public
  */
+
+exports.authorizeNominator = async (req, res, next) => {
+  if (!res.locals.user) return next(new Error('noAuth'));
+  const {roles=[]} = res.locals.user || {};
+  if (roles.includes('administrator') || roles.includes('super-administrator') || roles.includes('nominator')) {
+    next();
+  }
+  else {
+    return next(new Error('noAuth'));
+  }
+}
 
 exports.authorizeAdmin = async (req, res, next) => {
   if (!res.locals.user) return next(new Error('noAuth'));
