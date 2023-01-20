@@ -44,7 +44,7 @@ const genFileID = function (data) {
   const {firstname = '', lastname = '' } = nominee || {};
   const label = title.slice(0, 15) || `${firstname}_${lastname}`.slice(0, 15);
   const organization = (organizations || []).map(org => {
-    return schemaServices.lookup('organizations', org).slice(0, 10);
+    return schemaServices.lookup('organizations', org).slice(0, 15);
   }).join('_')
   // convert file ID to slug
   const fileID = `${category}_${label}_${organization}`
@@ -290,11 +290,11 @@ const generateNominationPDF = async function(data, callback) {
   // - pad sequence with 00000
   // - creates (1) nomination PDF and (2) merged PDF
   const fileId = genFileID(data);
-  const basename = `${fileId}-nomination`;
+  const basename = `${fileId}_nomination`;
   const nominationFilename = `${basename}.pdf`;
   const dirPath = path.join(dataPath, 'generated', _id.toString());
   const nominationFilePath = path.join(dirPath, nominationFilename);
-  const mergedFilename = `${basename}-merged.pdf`;
+  const mergedFilename = `${basename}_merged.pdf`;
   const mergedFilePath = path.join(dirPath, mergedFilename);
 
   // ensure directory path exists
