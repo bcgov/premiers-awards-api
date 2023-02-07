@@ -110,7 +110,7 @@ const schemaData = {
         {value: 'org-14', text: 'Indigenous Relations and Reconciliation'},
         {value: 'org-15', text: 'Jobs, Economic Recovery and Innovation'},
         {value: 'org-16', text: 'Labour'},
-        {value: 'org-26', text: 'Ministry of Water, Land and Resource Stewardship'}
+        {value: 'org-26', text: 'Ministry of Water, Land and Resource Stewardship'},
         {value: 'org-17', text: 'Mental Health & Addictions'},
         {value: 'org-18', text: 'Municipal Affairs'},
         {value: 'org-25', text: 'Office of the Premier'},
