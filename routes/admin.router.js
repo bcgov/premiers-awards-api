@@ -28,7 +28,11 @@ router.get('/users/delete/:guid', authorizeSuperAdmin, userController.remove);
  * Admin settings routes.
  */
 
-router.get('/settings/get/:id', authorizeData, settingsController.get);
+router.get('/settings/view/', authorizeSuperAdmin, settingsController.getAll);
+router.get('/settings/view/:id', authorizeData, settingsController.get);
 router.get('/settings/type/:type/', authorizeData, settingsController.getByType);
+router.post('/settings/create', authorizeSuperAdmin, settingsController.create);
+router.post('/settings/update/:id', authorizeSuperAdmin, settingsController.update);
+router.get('/settings/delete/:id', authorizeSuperAdmin, settingsController.delete);
 
 module.exports = router;
