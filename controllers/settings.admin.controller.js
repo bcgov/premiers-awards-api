@@ -29,6 +29,26 @@ exports.get = async (req, res, next) => {
 };
 
 /**
+ * Get global settings.
+ *
+ * @param req
+ * @param res
+ * @param next
+ * @src public
+ */
+
+exports.getAll = async (req, res, next) => {
+
+  try {
+    const setting = await SettingsModel.find({});
+    return res.status(200).json(setting);
+  } catch (err) {
+    console.error(err)
+    return next(err);
+  }
+};
+
+/**
  * Get settings data for requested type.
  *
  * @param req
@@ -61,15 +81,14 @@ exports.getByType = async (req, res, next) => {
 exports.create = async (req, res, next) => {
   try {
     let data = req.body;
-    const { type='', value='' } = data || {};
 
-    if (!type || !value)
-      return next(new Error('invalidInput'));
+    // check if input data is valid
+    const { label='', type='', value='' } = data || {};
+    if (!type || !value) return next(new Error('invalidInput'));
 
     // check if setting already exists in collection
-    const currentSettings = await SettingsModel.find({type: type, value: value});
-    if (currentSettings)
-      return next(new Error('recordExists'));
+    const current = await SettingsModel.findOne({type, label, value});
+    if (current) return next(new Error('recordExists'));
 
     // insert new record into collection
     const setting = await SettingsModel.create(data);
@@ -95,13 +114,8 @@ exports.update = async (req, res, next) => {
     let id = req.params.id;
     let data = req.body;
 
-    // look up setting
-    const setting = await SettingsModel.findById(id);
-    if (!setting)
-      return next(Error('invalidInput'));
-
-    // update setting in collection
-    const response = await SettingsModel.updateOne({ _id: id }, data);
+    // update setting
+    const response = await SettingsModel.findOneAndUpdate({ _id: id }, data);
     res.status(200).json(response);
   } catch (err) {
     return next(err);
@@ -125,8 +139,7 @@ exports.delete = async (req, res, next) => {
 
     // look up setting
     const setting = await SettingsModel.findById(id);
-    if (!setting)
-      return next(Error('noRecord'));
+    if (!setting) return next(Error('noRecord'));
 
     const response = await SettingsModel.deleteOne({_id: id})
 

@@ -14,9 +14,11 @@ const { generateNominationPDF } = require('../services/pdf.services');
 const { Readable } = require('stream');
 const {checkCategory} = require("../services/schema.services");
 const mongoose = require('mongoose');
+const settings = require('../services/schema.services')
 
 // limit number of draft nomination submissions
-const maxNumberOfDrafts = 12;
+const maxNumberOfDrafts = settings.get('maxDrafts');
+
 
 /**
  * Get nomination data by ID.
