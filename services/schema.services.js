@@ -11,6 +11,8 @@
  */
 
 const schemaData = {
+    maxDrafts: 60,
+    maxAttachments: 5,
     "year": 2023,
     "status": [
         {value: 'draft', text: 'Draft'},

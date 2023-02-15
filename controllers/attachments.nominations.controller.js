@@ -8,8 +8,9 @@
 const AttachmentModel = require('../models/attachment.nominations.model');
 const NominationModel = require('../models/entry.nominations.model');
 const {deleteFile} = require('../services/files.services');
+const settings = require('../services/schema.services')
 
-const maxAttachments = 5;
+const maxAttachments = settings.get('maxAttachments');
 
 /**
  * Get attachments by nomination.
