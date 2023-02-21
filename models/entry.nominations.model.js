@@ -142,6 +142,10 @@ const NominationSchema = new Schema(
                     type: String,
                     default: '',
                 },
+                phone: {
+                    type: String,
+                    default: '',
+                },
                 locations: [LocationSchema]
             }
         },
