@@ -50,6 +50,7 @@ const schemaData = {
                 'summary',
                 'context',
                 'valuing_people',
+                'complexity',
                 'commitment',
                 'impact',
             ]},
