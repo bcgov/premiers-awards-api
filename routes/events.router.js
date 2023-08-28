@@ -67,7 +67,7 @@ router.post(
 router.get("/guests", authorizeRegistrar, registrationController.getAllGuests);
 router.get(
   "/registrations",
-  authorizeAdmin,
+  authorizeRegistrar,
   registrationController.getAllRegistrations
 );
 router.get(
