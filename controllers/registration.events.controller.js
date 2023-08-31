@@ -21,19 +21,24 @@ const RegistrationModel = require("../models/registration.events.model.js");
 
 exports.getAllRegistrations = async (req, res, next) => {
   try {
-    if (!res.locals.user) return next(new Error('noAuth'));
-    const {roles=[]} = res.locals.user || {};
-    if (roles.includes('administrator') || roles.includes('super-administrator')) {
+    if (!res.locals.user) return next(new Error("noAuth"));
+    const { roles = [] } = res.locals.user || {};
+    if (
+      roles.includes("administrator") ||
+      roles.includes("super-administrator")
+    ) {
       const registrations = await RegistrationModel.find({});
       return res.status(200).json(registrations);
-    }
-    else if (roles.includes('registrar')){
-      const registration = await RegistrationModel.find({ guid: res.locals.user.guid});
+    } else if (roles.includes("registrar")) {
+      const registration = await RegistrationModel.find({
+        guid: res.locals.user.guid,
+      });
       const organization = registration[0].organization;
-      const registrations = await RegistrationModel.find({organization: organization});
+      const registrations = await RegistrationModel.find({
+        organization: organization,
+      });
       return res.status(200).json(registrations);
     }
-
   } catch (err) {
     console.error(err);
     return next(err);
@@ -217,6 +222,10 @@ exports.registerGuest = async (req, res, next) => {
       firstname = "",
       lastname = "",
       attendancetype = "",
+      pronouns = [],
+      custompronouns = "",
+      hascustompronouns = false || true,
+      supportingfinalist = "",
       accessibility = {
         wheelchairrequired: false,
         attendantrequired: false,
@@ -244,6 +253,10 @@ exports.registerGuest = async (req, res, next) => {
       attendancetype,
       accessibility,
       dietary,
+      pronouns,
+      custompronouns,
+      hascustompronouns,
+      supportingfinalist,
     });
     //const { id = null } = registration || {};
 

@@ -52,6 +52,19 @@ const GuestSchema = new Schema(
     notes: {
       type: String,
     },
+    pronouns: {
+      type: Array,
+    },
+    hascustompronouns: {
+      type: Boolean,
+    },
+    custompronouns: {
+      type: String,
+    },
+    supportingfinalist: {
+      type: String,
+      required: true,
+    },
   },
   { timestamps: true }
 );
