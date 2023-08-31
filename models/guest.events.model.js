@@ -39,6 +39,9 @@ const GuestSchema = new Schema(
       type: String,
       required: true,
     },
+    hasexternalorganization: {
+      type: Boolean,
+    },
     accessibility: {
       type: Array,
     },
