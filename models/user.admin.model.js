@@ -33,6 +33,10 @@ const UserSchema = new Schema(
     email: {
       type: String,
     },
+    organization: {
+      type: String,
+      required: true,
+    },
     roles: {
       type: [String],
       enum: [
@@ -43,7 +47,7 @@ const UserSchema = new Schema(
         "super-administrator",
       ],
       required: true,
-    }
+    },
   },
   { timestamps: true }
 );

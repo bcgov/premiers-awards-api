@@ -27,6 +27,7 @@ exports.register = async (req, res, next) => {
       firstname = "",
       lastname = "",
       email = "",
+      organization = "",
     } = req.body || {};
     // ensure role is set to 'inactive' for non-activated users
     const user = await auth.create({
@@ -36,6 +37,7 @@ exports.register = async (req, res, next) => {
       firstname: firstname,
       lastname: lastname,
       email: email,
+      organization: organization,
     });
     res.status(200).json(user);
   } catch (err) {
@@ -127,6 +129,7 @@ exports.update = async (req, res, next) => {
       firstname = "",
       lastname = "",
       email = "",
+      organization = "",
     } = data || {};
 
     // restrict administrator role updates to super-administrator users
@@ -148,6 +151,7 @@ exports.update = async (req, res, next) => {
         firstname: firstname,
         lastname: lastname,
         email: email,
+        organization: organization,
         $set: { roles: roles },
       },
       opts
@@ -219,6 +223,7 @@ exports.login = async (req, res, next) => {
       roles = [],
       firstname = "",
       lastname = "",
+      organization = "",
     } = user || {};
 
     // successful login
@@ -231,6 +236,8 @@ exports.login = async (req, res, next) => {
         roles: roles,
         firstname: firstname,
         lastname: lastname,
+        organization,
+        organization,
       },
     });
   } catch (err) {
