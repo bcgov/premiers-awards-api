@@ -47,8 +47,7 @@ exports.getAllRegistrations = async (req, res, next) => {
 
 exports.getAllGuests = async (req, res, next) => {
   try {
-    const guests = await GuestModel.find({});
-    //console.log(guests);
+    const guests = await GuestModel.find({}).populate("registration");
     return res.status(200).json(guests);
   } catch (err) {
     console.error(err);
