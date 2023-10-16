@@ -330,6 +330,7 @@ const createUser = async (userData) => {
     lastname = "",
     email = "",
     roles = [],
+    organization = "",
   } = userData || {};
 
   // Validate user input
@@ -354,6 +355,7 @@ const createUser = async (userData) => {
     lastname: lastname,
     email: email.toLowerCase(),
     roles: roles,
+    organization: organization,
   });
 };
 exports.create = createUser;
