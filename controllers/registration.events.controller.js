@@ -57,6 +57,7 @@ exports.getAllRegistrations = async (req, res, next) => {
 exports.getAllGuests = async (req, res, next) => {
   try {
     const guests = await GuestModel.find({}).populate("registration");
+    console.log(guests);
     return res.status(200).json(guests);
   } catch (err) {
     console.error(err);
@@ -125,15 +126,26 @@ exports.getRegistrationGuests = async (req, res, next) => {
     if (mongoose.Types.ObjectId.isValid(id)) {
       guests = await RegistrationModel.find({
         _id: id,
-      }).populate("guests");
+      })
+        .populate("guests")
+        .populate({
+          path: "guests",
+          populate: {
+            path: "registration",
+          },
+        });
     } else {
       guests = await RegistrationModel.find({
         guid: id,
-      }).populate("guests");
+      }).populate({
+        path: "guests",
+        populate: {
+          path: "registration",
+        },
+      });
     }
 
     if (!guests) return next(Error("invalidInput"));
-
     return res.status(200).json(guests);
   } catch (err) {
     console.error(err);
