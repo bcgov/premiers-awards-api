@@ -347,6 +347,19 @@ const createUser = async (userData) => {
     throw new Error("userExists");
   }
 
+  // check if user exist by username and email - update guid if incorrect
+  const existingUserNullGuid = await UserModel.findOne({
+    username: username,
+    email: email,
+    guid: null,
+  });
+  if (existingUserNullGuid) {
+    await UserModel.updateOne(
+      { _id: existingUserNullGuid._id },
+      { $set: { guid: guid } }
+    );
+  }
+
   // Create user in our database
   return await UserModel.create({
     guid: guid,
