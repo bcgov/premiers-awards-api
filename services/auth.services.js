@@ -348,17 +348,17 @@ const createUser = async (userData) => {
   }
 
   // check if user exist by username and email - update guid if incorrect
-  const existingUserNullGuid = await UserModel.findOne({
+  const existingUserGuidMismatch = await UserModel.findOne({
     username: username,
-    email: email,
+    email: email.toLowerCase(),
   });
   if (
-    existingUserNullGuid != null &&
-    existingUserNullGuid.guid != null &&
-    existingUserNullGuid.guid != guid
+    existingUserGuidMismatch != null &&
+    existingUserGuidMismatch.guid != null &&
+    existingUserGuidMismatch.guid != guid
   ) {
     await UserModel.updateOne(
-      { _id: existingUserNullGuid._id },
+      { _id: existingUserGuidMismatch._id },
       { guid: guid }
     );
     return await UserModel.findOne({ guid: guid });
