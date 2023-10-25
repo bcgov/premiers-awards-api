@@ -351,13 +351,13 @@ const createUser = async (userData) => {
   const existingUserNullGuid = await UserModel.findOne({
     username: username,
     email: email,
-    guid: null,
   });
-  if (existingUserNullGuid) {
+  if (existingUserNullGuid.guid !== guid) {
     await UserModel.updateOne(
       { _id: existingUserNullGuid._id },
-      { $set: { guid: guid } }
+      { guid: guid }
     );
+    return await UserModel.findOne({ guid: guid });
   }
 
   // Create user in our database
