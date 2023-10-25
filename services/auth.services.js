@@ -352,7 +352,11 @@ const createUser = async (userData) => {
     username: username,
     email: email,
   });
-  if (existingUserNullGuid.guid !== guid) {
+  if (
+    existingUserNullGuid != null &&
+    existingUserNullGuid.guid != null &&
+    existingUserNullGuid.guid != guid
+  ) {
     await UserModel.updateOne(
       { _id: existingUserNullGuid._id },
       { guid: guid }
