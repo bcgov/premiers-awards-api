@@ -5,17 +5,17 @@
  * MIT Licensed
  */
 
-const fs = require('fs');
-const { promises: Fs } = require('fs');
-const path = require('path');
+const fs = require("fs");
+const { promises: Fs } = require("fs");
+const path = require("path");
 const AdmZip = require("adm-zip");
-const multer = require('multer');
+const multer = require("multer");
 const AttachmentModel = require("../models/attachment.nominations.model");
-const uuid = require('uuid');
-const {genFileID} = require("./pdf.services");
+const uuid = require("uuid");
+const { genFileID } = require("./pdf.services");
 
-const dataPath = process.env.DATA_PATH
-const acceptedMIMETypes = ['application/pdf'];
+const dataPath = process.env.DATA_PATH;
+const acceptedMIMETypes = ["application/pdf"];
 
 /**
  * File uploader middleware (multer)
@@ -32,10 +32,9 @@ const acceptedMIMETypes = ['application/pdf'];
 // - pass function that will generate destination path
 const storage = multer.diskStorage({
   destination: (req, file, callback) => {
-
     // initialize upload path
     const id = req.params.id;
-    const destination = path.join(dataPath, 'uploads', `${id}`);
+    const destination = path.join(dataPath, "uploads", `${id}`);
 
     // ensure directory path exists
     fs.mkdir(destination, { recursive: true }, (err) => {
@@ -45,53 +44,49 @@ const storage = multer.diskStorage({
   },
   /**
    * Pass function that generates unique filename to avoid overwriting files
-  */
+   */
   filename: (req, file, callback) => {
     callback(null, `attachment_${uuid.v1()}_${file.originalname}`);
-  }
+  },
 });
 
 // restrict files by MIME types.
-const fileFilter = function(req, file, next) {
+const fileFilter = function (req, file, next) {
   // exit on empty file
-  if(!file) next();
+  if (!file) next();
 
   // check for accepted MIME type
   const accepted = acceptedMIMETypes.includes(file.mimetype);
-  if ( accepted ) {
-    console.log('File attachment file format is accepted.');
+  if (accepted) {
+    console.log("File attachment file format is accepted.");
     next(null, true);
-  }
-  else{
-    console.log(`Attachment file format ${file.mimetype} not supported`)
+  } else {
+    console.log(`Attachment file format ${file.mimetype} not supported`);
     return next();
   }
 };
 
-const uploader = multer({storage: storage, fileFilter: fileFilter});
-exports.uploader = uploader.single('attached');
-
+const uploader = multer({ storage: storage, fileFilter: fileFilter });
+exports.uploader = uploader.single("attached");
 
 /**
  * Delete file from storage
  * @param filePath
  */
 
-const deleteFile = async function(filePath) {
+const deleteFile = async function (filePath) {
   return fs.stat(filePath, async (err) => {
     if (err == null) {
       return await Fs.unlink(filePath);
-    }
-    else if (err.code === 'ENOENT') {
+    } else if (err.code === "ENOENT") {
       // file does not exist (ignore)
       console.warn(err);
       return null;
-    }
-    else {
+    } else {
       throw err;
     }
   });
-}
+};
 exports.deleteFile = deleteFile;
 
 /**
@@ -103,10 +98,9 @@ exports.deleteFile = deleteFile;
  * @param callback
  */
 
-const createCSV = function(jsonData, dirPath, filename, callback) {
-
+const createCSV = function (jsonData, dirPath, filename, callback) {
   return jsonData;
-}
+};
 exports.createCSV = createCSV;
 
 /**
@@ -117,9 +111,12 @@ exports.createCSV = createCSV;
  */
 
 const isWordDoc = function (mimeType) {
-  return mimeType === 'application/msword'
-    || mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-}
+  return (
+    mimeType === "application/msword" ||
+    mimeType ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  );
+};
 exports.isWordDoc = isWordDoc;
 
 /**
@@ -130,20 +127,19 @@ exports.isWordDoc = isWordDoc;
  * @param zipRoot
  */
 
-const createZIP = async function(zipEntries, zipRoot) {
-
+const createZIP = async function (zipEntries, zipRoot) {
   // initialize zip file
   const zip = new AdmZip();
 
   // add listed directories
-  ( zipEntries || [] ).map(zipEntry => {
+  (zipEntries || []).map((zipEntry) => {
     zip.addLocalFile(zipEntry, zipRoot);
   });
 
   // toBuffer() is used to read the data and save it
   // for downloading process!
   return zip.toBuffer();
-}
+};
 exports.createZIP = createZIP;
 
 /**
@@ -153,40 +149,51 @@ exports.createZIP = createZIP;
  * @param {Array} nominations
  */
 
-const createNominationPackage = async function(nominations) {
-
+const createNominationPackage = async function (nominations) {
   // initialize zip file
   const zip = new AdmZip();
+  try {
+    // create folder entries
+    await Promise.all(
+      nominations.map(async (nomination) => {
+        const { _id = "", seq = "", filePaths = {} } = nomination || {};
 
-  // create folder entries
-  await Promise.all(nominations.map(async(nomination) => {
+        // - use unique sequence number to label nomination folder
+        const packageDir = genFileID(nomination);
 
-    const { _id='', seq='', filePaths={} } = nomination || {};
+        const { dirname } = require("path");
+        const appDir = dirname(require.main.filename);
 
-    // - use unique sequence number to label nomination folder
-    const packageDir = genFileID(nomination);
+        if (filePaths.merged)
+          filePaths.merged = path.join(appDir, filePaths.merged);
+        if (filePaths.nomination)
+          filePaths.nomination = path.join(appDir, filePaths.nomination);
 
-    // add nomination and merged files
-    zip.addLocalFile(filePaths.nomination, packageDir);
-    if (await fileExists(filePaths.merged))
-      zip.addLocalFile(filePaths.merged, packageDir);
+        // add nomination and merged files
+        zip.addLocalFile(filePaths.nomination, packageDir);
 
-    // add attachment PDFs
-    const attachments = await AttachmentModel.find({ nomination: _id });
-    attachments.map(attachment => {
-      const {file = {}} = attachment || {};
-      const {path = ''} = file || {};
-      zip.addLocalFile(path, packageDir);
-    });
+        if (await fileExists(filePaths.merged))
+          zip.addLocalFile(filePaths.merged, packageDir);
 
-  }));
-
+        // add attachment PDFs
+        const attachments = await AttachmentModel.find({ nomination: _id });
+        attachments.map((attachment) => {
+          const { file = {} } = attachment || {};
+          const { path = "" } = file || {};
+          const pathlib = require("path");
+          zip.addLocalFile(pathlib.join(appDir, path), packageDir);
+        });
+      })
+    );
+    return zip.toBuffer();
+  } catch (e) {
+    console.error(e);
+    return next(e);
+  }
   // toBuffer() is used to read the data and save it
   // for downloading process!
-  return zip.toBuffer();
-}
+};
 exports.createNominationPackage = createNominationPackage;
-
 
 /**
  * Check if file path exists.
@@ -196,12 +203,11 @@ exports.createNominationPackage = createNominationPackage;
  */
 
 const fileExists = async function (filePath) {
-    try {
-      await Fs.access(filePath)
-      return true
-    } catch {
-      return false
-    }
-}
-exports.fileExists = fileExists
-
+  try {
+    await Fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+};
+exports.fileExists = fileExists;
