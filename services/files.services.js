@@ -174,8 +174,12 @@ const createNominationPackage = async function (nominations) {
       });
     })
   ).catch((error) => console.log(error));
-
-  return zip.toBuffer();
+  try {
+    return zip.toBuffer();
+  } catch (e) {
+    console.log(e);
+    return undefined;
+  }
 
   // toBuffer() is used to read the data and save it
   // for downloading process!

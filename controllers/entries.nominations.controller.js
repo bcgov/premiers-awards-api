@@ -330,6 +330,7 @@ exports.exporter = async (req, res, next) => {
       : null;
     if (!data) return next(new Error("InvalidInput"));
 
+    console.log("[DEBUG]: Start creating data stream.");
     // create data stream and pipe to response
     res.on("error", (err) => {
       console.error("Error in write stream:", err);
