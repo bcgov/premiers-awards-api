@@ -175,6 +175,7 @@ const createNominationPackage = async function (nominations) {
     })
   ).catch((error) => console.log(error));
   try {
+    console.log("[DEBUG]: Return zip.toBuffer().");
     return zip.toBuffer();
   } catch (e) {
     console.log(e);

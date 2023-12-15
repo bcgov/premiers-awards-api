@@ -328,7 +328,10 @@ exports.exporter = async (req, res, next) => {
     const data = exportHandlers.hasOwnProperty(format)
       ? await exportHandlers[format]()
       : null;
-    if (!data) return next(new Error("InvalidInput"));
+    if (!data) {
+      console.log("[DEBUG]: No data from export handler.");
+      return next(new Error("InvalidInput"));
+    }
 
     console.log("[DEBUG]: Start creating data stream.");
     // create data stream and pipe to response
