@@ -329,7 +329,7 @@ exports.exporter = async (req, res, next) => {
       ? await exportHandlers[format]()
       : null;
     if (!data) return next(new Error("InvalidInput"));
-
+    console.log("DEBUG: FINISHED CREATING NOMINATIONS PACKAGE");
     // create data stream and pipe to response
     res.on("error", (err) => {
       console.error("Error in write stream:", err);
