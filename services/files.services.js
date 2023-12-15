@@ -160,17 +160,8 @@ const createNominationPackage = async function (nominations) {
       // - use unique sequence number to label nomination folder
       const packageDir = genFileID(nomination);
 
-      const { dirname } = require("path");
-      const appDir = dirname(require.main.filename);
-
-      if (filePaths.merged)
-        filePaths.merged = path.join(appDir, filePaths.merged);
-      if (filePaths.nomination)
-        filePaths.nomination = path.join(appDir, filePaths.nomination);
-
       // add nomination and merged files
       zip.addLocalFile(filePaths.nomination, packageDir);
-
       if (await fileExists(filePaths.merged))
         zip.addLocalFile(filePaths.merged, packageDir);
 
@@ -179,11 +170,11 @@ const createNominationPackage = async function (nominations) {
       attachments.map((attachment) => {
         const { file = {} } = attachment || {};
         const { path = "" } = file || {};
-        const pathlib = require("path");
-        zip.addLocalFile(pathlib.join(appDir, path), packageDir);
+        zip.addLocalFile(path, packageDir);
       });
     })
   ).catch((error) => console.log(error));
+
   return zip.toBuffer();
 
   // toBuffer() is used to read the data and save it
