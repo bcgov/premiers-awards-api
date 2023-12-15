@@ -178,7 +178,7 @@ const createNominationPackage = async function (nominations) {
     return zip.toBuffer();
   } catch (e) {
     console.log(e);
-    return undefined;
+    return;
   }
 
   // toBuffer() is used to read the data and save it
