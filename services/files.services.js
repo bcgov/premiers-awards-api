@@ -175,12 +175,8 @@ const createNominationPackage = async function (nominations) {
     })
   ).catch((error) => console.log(error));
   try {
-    console.log("[DEBUG]: Return zip.toBuffer().");
-    var buffer = zip.toBufferPromise().catch((error) => {
-      console.log("error toBuffer:");
-      console.log(error);
-    });
-    return buffer;
+    var zipFilePath = genExportZipFile(); //path.join("/data/generated/temp/", genExportZipFile());
+    zip.writeZip(zipFilePath);
   } catch (e) {
     console.log(e);
     return;
