@@ -339,13 +339,15 @@ exports.exporter = async (req, res, next) => {
       res.on("error", (err) => {
         console.error("Error in write stream:", err);
       });
+
       if (fileExists(data)) {
+        console.log("Found File");
         fs.createReadStream(data)
           .pipe(res)
           .on("end", function () {
-            fs.unlink(data);
+            console.log("Deleting file: " + data);
+            //fs.unlink(data);
           });
-        return;
       }
     } else {
       // create data stream and pipe to response
