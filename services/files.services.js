@@ -175,7 +175,7 @@ const createNominationPackage = async function (nominations) {
     })
   ).catch((error) => console.log(error));
   try {
-    var zipFilePath = genExportZipFile(); //path.join("/data/generated/temp/", genExportZipFile());
+    var zipFilePath = genExportZipFile();
     zip.writeZip(zipFilePath);
     return zipFilePath;
   } catch (e) {
