@@ -12,7 +12,7 @@ const AdmZip = require("adm-zip");
 const multer = require("multer");
 const AttachmentModel = require("../models/attachment.nominations.model");
 const uuid = require("uuid");
-const { genFileID } = require("./pdf.services");
+const { genFileID, genExportZipFile } = require("./pdf.services");
 
 const dataPath = process.env.DATA_PATH;
 const acceptedMIMETypes = ["application/pdf"];
@@ -177,6 +177,7 @@ const createNominationPackage = async function (nominations) {
   try {
     var zipFilePath = genExportZipFile(); //path.join("/data/generated/temp/", genExportZipFile());
     zip.writeZip(zipFilePath);
+    return zipFilePath;
   } catch (e) {
     console.log(e);
     return;

@@ -19,6 +19,7 @@ const { Readable } = require("stream");
 const { checkCategory } = require("../services/schema.services");
 const mongoose = require("mongoose");
 const settings = require("../services/schema.services");
+const fs = require("fs");
 
 // limit number of draft nomination submissions
 const maxNumberOfDrafts = settings.get("maxDrafts");
@@ -333,24 +334,38 @@ exports.exporter = async (req, res, next) => {
       return next(new Error("InvalidInput"));
     }
 
-    console.log("[DEBUG]: Start creating data stream.");
-    // create data stream and pipe to response
-    res.on("error", (err) => {
-      console.error("Error in write stream:", err);
-    });
-    let rs = new Readable();
-    rs._read = () => {}; // may be redundant
-    rs.pipe(res);
-    rs.on("error", function (err) {
-      console.error(err);
-      res.status(404).end();
-    });
-    rs.on("error", function (err) {
-      console.error(err);
-      res.status(404).end();
-    });
-    rs.push(data);
-    rs.push(null);
+    if (typeof data === "string" || data instanceof String) {
+      // create data stream and pipe to response
+      res.on("error", (err) => {
+        console.error("Error in write stream:", err);
+      });
+      if (fileExists(data)) {
+        fs.createReadStream(data)
+          .pipe(res)
+          .on("end", function () {
+            fs.unlink(data);
+          });
+        return;
+      }
+    } else {
+      // create data stream and pipe to response
+      res.on("error", (err) => {
+        console.error("Error in write stream:", err);
+      });
+      let rs = new Readable();
+      rs._read = () => {}; // may be redundant
+      rs.pipe(res);
+      rs.on("error", function (err) {
+        console.error(err);
+        res.status(404).end();
+      });
+      rs.on("error", function (err) {
+        console.error(err);
+        res.status(404).end();
+      });
+      rs.push(data);
+      rs.push(null);
+    }
   } catch (err) {
     console.error(err);
     return next(err);
