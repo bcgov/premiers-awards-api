@@ -70,16 +70,15 @@ const genFileID = function (data) {
 exports.genFileID = genFileID;
 
 const genExportZipFile = function () {
-  const dirPath = path.join(
-    dataPath ? dataPath : "",
-    "temp",
-    `nominations_export_${new Date().toJSON().slice(0, 21)}.zip`
-  );
+  const dirPath = path.join(dataPath ? dataPath : "", "temp");
   // ensure directory path exists
   fs.mkdir(dirPath, { recursive: true }, (err) => {
     if (err) throw err;
   });
-  return dirPath;
+  return path.join(
+    dirPath,
+    `nominations_export_${new Date().toJSON().slice(0, 21)}.zip`
+  );
 };
 exports.genExportZipFile = genExportZipFile;
 
