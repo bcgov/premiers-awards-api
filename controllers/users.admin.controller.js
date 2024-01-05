@@ -7,6 +7,7 @@
 
 const UserModel = require("../models/user.admin.model");
 const auth = require("../services/auth.services");
+const mail = require("../services/mail.services");
 const opts = { runValidators: true };
 
 /**
@@ -39,6 +40,8 @@ exports.register = async (req, res, next) => {
       email: email,
       organization: organization,
     });
+    //TODO: Test
+    //await mail.sendRegistrationNotification(user);
     res.status(200).json(user);
   } catch (err) {
     return next(err);
@@ -123,6 +126,7 @@ exports.update = async (req, res, next) => {
     const user = await UserModel.findOne({ guid: guid });
     if (!user) return next(Error("noRecord"));
     const { id = "" } = user || {};
+    const userPreviouslyInactive = user.roles;
     const {
       roles = [],
       username = "",
@@ -142,6 +146,12 @@ exports.update = async (req, res, next) => {
     ) {
       return next(new Error("noAuth"));
     }
+
+    // TODO: Test
+    // User was previously inactive, now they are active/have no inactive role applied
+    // if (userPreviouslyInactive && roles.indexOf("inactive") == -1) {
+    //   mail.sendRegistrationApprovedNotification(email, roles);
+    // }
 
     // update user data in collection
     const response = await UserModel.updateOne(
