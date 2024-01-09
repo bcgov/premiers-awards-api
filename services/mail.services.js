@@ -143,8 +143,8 @@ module.exports.sendRegistrationNotification = async (user) => {
   const fromName = process.env.MAIL_FROM_NAME;
   const subject = "Registration Approval Request";
 
-  const adminTemplate = "email-user-account-admin-approval.ejs";
-  const userTemplate = "email-user-account-approval-needed.ejs";
+  const adminTemplate = "email-user-account-admin-alert.ejs";
+  const userTemplate = "email-user-account-pending-registration.ejs";
 
   // send ADMIN approval alert email
   const [error1, response1] = await sendMail(
