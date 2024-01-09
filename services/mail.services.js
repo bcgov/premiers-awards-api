@@ -133,7 +133,7 @@ const sendMail = async (
 };
 
 /**
- * Send registration email confirmation
+ * Send user registration confirmation & admin a notification
  * @param user
  */
 module.exports.sendRegistrationNotification = async (user) => {
