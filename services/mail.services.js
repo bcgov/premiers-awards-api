@@ -137,28 +137,15 @@ const sendMail = async (
  * @param user
  */
 module.exports.sendRegistrationNotification = async (user) => {
-  // check status of registration
-  const { service, supervisor, contact } = user || {};
-  const { confirmed, milestone } = service || {};
-  const isLSA = milestone >= 25;
-
-  // check if registration is confirmed
-  if (!confirmed) return;
-
-  // select confirmation email
-  // - LSA registrations (milestone >= 25)
-  // - Service Pin registration (milestone < 25)
+  const adminEmails = await _getAdminEmails();
 
   const from = process.env.MAIL_FROM_ADDRESS;
   const fromName = process.env.MAIL_FROM_NAME;
-
-  const subject = "Premiers Awards - Registration Approval Request";
+  const subject = "Registration Approval Request";
 
   const adminTemplate = "email-user-account-admin-approval.ejs";
-
   const userTemplate = "email-user-account-approval-needed.ejs";
 
-  const adminEmails = _getAdminEmails();
   // send ADMIN approval alert email
   const [error1, response1] = await sendMail(
     adminEmails,
@@ -173,7 +160,7 @@ module.exports.sendRegistrationNotification = async (user) => {
 
   // send USER confirmation mail
   const [error2, response2] = await sendMail(
-    [contact.office_email || ""],
+    [user.email || ""],
     subject,
     userTemplate,
     user,
@@ -187,10 +174,10 @@ module.exports.sendRegistrationNotification = async (user) => {
 };
 
 module.exports.sendRegistrationApprovedNotification = async (email, roles) => {
-  // send confirmation mail to supervisor
+  // send confirmation mail to user
   return await sendMail(
     [email],
-    "Premiers Awards Account Approved",
+    "Account Approved",
     "email-user-account-approved.ejs",
     roles,
     process.env.MAIL_FROM_ADDRESS,
