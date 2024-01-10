@@ -174,14 +174,27 @@ module.exports.sendRegistrationNotification = async (user) => {
 
 module.exports.sendRegistrationApprovedNotification = async (email, roles) => {
   // send confirmation mail to user
-  return await sendMail(
-    [email],
-    "Account Approved",
-    "email-user-account-approved.ejs",
-    roles,
-    process.env.MAIL_FROM_ADDRESS,
-    process.env.MAIL_FROM_NAME,
-    [],
-    null
-  );
+  if (roles.includes("registrar")) {
+    return await sendMail(
+      [email],
+      "Account Approved",
+      "email-user-account-approved-registrar.ejs",
+      roles,
+      process.env.MAIL_FROM_ADDRESS,
+      process.env.MAIL_FROM_NAME,
+      [],
+      null
+    );
+  } else {
+    return await sendMail(
+      [email],
+      "Account Approved",
+      "email-user-account-approved-nominator.ejs",
+      roles,
+      process.env.MAIL_FROM_ADDRESS,
+      process.env.MAIL_FROM_NAME,
+      [],
+      null
+    );
+  }
 };
