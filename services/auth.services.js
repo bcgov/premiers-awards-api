@@ -258,10 +258,11 @@ exports.authorizeRegistrar = async (req, res, next) => {
   if (!res.locals.user) return next(new Error("noAuth"));
   const { roles = [] } = res.locals.user || {};
   if (
-    roles.includes("registrar") ||
-    roles.includes("nominator") ||
-    roles.includes("administrator") ||
-    roles.includes("super-administrator")
+    !roles.includes("inactive") &&
+    (roles.includes("registrar") ||
+      roles.includes("nominator") ||
+      roles.includes("administrator") ||
+      roles.includes("super-administrator"))
   ) {
     next();
   } else {
@@ -282,9 +283,10 @@ exports.authorizeNominator = async (req, res, next) => {
   if (!res.locals.user) return next(new Error("noAuth"));
   const { roles = [] } = res.locals.user || {};
   if (
-    roles.includes("administrator") ||
-    roles.includes("super-administrator") ||
-    roles.includes("nominator")
+    !roles.includes("inactive") &&
+    (roles.includes("administrator") ||
+      roles.includes("super-administrator") ||
+      roles.includes("nominator"))
   ) {
     next();
   } else {
@@ -296,8 +298,8 @@ exports.authorizeAdmin = async (req, res, next) => {
   if (!res.locals.user) return next(new Error("noAuth"));
   const { roles = [] } = res.locals.user || {};
   if (
-    roles.includes("administrator") ||
-    roles.includes("super-administrator")
+    !roles.includes("inactive") &&
+    (roles.includes("administrator") || roles.includes("super-administrator"))
   ) {
     next();
   } else {
