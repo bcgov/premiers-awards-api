@@ -276,6 +276,7 @@ const generateNominationHTML = function (data) {
             <title>${title}</title>
             <link href='${customFontURL}' rel='stylesheet' type='text/css'>
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <meta name="lowquality" content="None"/>
             <style>
                 body {
                   font-family: 'BCSans', Helvetica, sans-serif;
