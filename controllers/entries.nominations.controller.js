@@ -298,6 +298,8 @@ exports.delete = async (req, res, next) => {
 
 exports.exporter = async (req, res, next) => {
   try {
+    // Creating a zip can take some time, prevents timeout
+    req.setTimeout(150000);
     // get requested format type
     let { format = "" } = req.params || {};
 
@@ -346,7 +348,7 @@ exports.exporter = async (req, res, next) => {
           .pipe(res)
           .on("end", function () {
             console.log("Deleting file: " + data);
-            //fs.unlink(data);
+            fs.unlink(data);
           });
       }
     } else {
