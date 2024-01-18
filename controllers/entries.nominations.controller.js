@@ -337,19 +337,8 @@ exports.exporter = async (req, res, next) => {
     }
 
     if (typeof data === "string" || data instanceof String) {
-      // create data stream and pipe to response
-      res.on("error", (err) => {
-        console.error("Error in write stream:", err);
-      });
-
       if (fileExists(data)) {
-        console.log("Found File");
-        fs.createReadStream(data)
-          .pipe(res)
-          .on("end", function () {
-            console.log("Deleting file: " + data);
-            fs.unlink(data);
-          });
+        res.download(data);
       }
     } else {
       // create data stream and pipe to response
