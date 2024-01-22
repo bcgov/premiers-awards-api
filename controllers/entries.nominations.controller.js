@@ -339,8 +339,10 @@ exports.exporter = async (req, res, next) => {
     // createNominationPackage returns filename string
     if (typeof data === "string" || data instanceof String) {
       if (fileExists(data)) {
-        await res.download(data);
-        fs.unlink(data);
+        await res.download(data, function (err) {
+          if (err) console.log("Error downloading export package to client");
+          else fs.unlink(data);
+        });
       }
     } else {
       // create data stream and pipe to response
