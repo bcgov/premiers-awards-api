@@ -336,9 +336,11 @@ exports.exporter = async (req, res, next) => {
       return next(new Error("InvalidInput"));
     }
 
+    // createNominationPackage returns filename string
     if (typeof data === "string" || data instanceof String) {
       if (fileExists(data)) {
-        res.download(data);
+        await res.download(data);
+        fs.unlink(data);
       }
     } else {
       // create data stream and pipe to response
