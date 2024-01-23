@@ -127,7 +127,7 @@ exports.getRegistrationGuests = async (req, res, next) => {
       guests = await RegistrationModel.find({
         _id: id,
       })
-        .populate("guests")
+        // .populate("guests")
         .populate({
           path: "guests",
           populate: {

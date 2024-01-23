@@ -1,0 +1,32 @@
+<%- await include('email-doctype'); %>
+  <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <%- await include('email-head', {title: title}); %>
+
+    <body class="body" style="
+      margin: 0;
+      padding: 0;
+      -webkit-text-size-adjust: 100%;
+      background-color: #ffffff;
+      color: #000000;
+    ">
+      <div class="container">
+        <%- await include('email-banner'); %>
+          <table>
+            <tr>
+              <td style="border-bottom:1px solid #e7e7e7;">
+                <p>Your Premier's Awards account has now been activated.</p>
+                <p>You may now nominate candidates at: <a
+                    href="https://premiersawards.gww.gov.bc.ca/nominations">premiersawards.gww.gov.bc.ca/nominations</a>
+                </p>
+                <br><br>
+                <p>
+                  If you require any assistance, please contact
+                  the <a href="mailto://PremiersAwards@gov.bc.ca">Premier's Awards Team</a>.
+                </p>
+              </td>
+            </tr>
+          </table>
+      </div>
+    </body>
+
+  </html>

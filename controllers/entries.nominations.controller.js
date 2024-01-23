@@ -19,6 +19,7 @@ const { Readable } = require("stream");
 const { checkCategory } = require("../services/schema.services");
 const mongoose = require("mongoose");
 const settings = require("../services/schema.services");
+const fs = require("fs");
 
 // limit number of draft nomination submissions
 const maxNumberOfDrafts = settings.get("maxDrafts");
@@ -297,6 +298,8 @@ exports.delete = async (req, res, next) => {
 
 exports.exporter = async (req, res, next) => {
   try {
+    // Creating a zip can take some time, prevents timeout
+    req.setTimeout(150000);
     // get requested format type
     let { format = "" } = req.params || {};
 
@@ -328,25 +331,38 @@ exports.exporter = async (req, res, next) => {
     const data = exportHandlers.hasOwnProperty(format)
       ? await exportHandlers[format]()
       : null;
-    if (!data) return next(new Error("InvalidInput"));
+    if (!data) {
+      console.log("[DEBUG]: No data from export handler.");
+      return next(new Error("InvalidInput"));
+    }
 
-    // create data stream and pipe to response
-    res.on("error", (err) => {
-      console.error("Error in write stream:", err);
-    });
-    let rs = new Readable();
-    rs._read = () => {}; // may be redundant
-    rs.pipe(res);
-    rs.on("error", function (err) {
-      console.error(err);
-      res.status(404).end();
-    });
-    rs.on("error", function (err) {
-      console.error(err);
-      res.status(404).end();
-    });
-    rs.push(data);
-    rs.push(null);
+    // createNominationPackage returns filename string
+    if (typeof data === "string" || data instanceof String) {
+      if (fileExists(data)) {
+        await res.download(data, function (err) {
+          if (err) console.log("Error downloading export package to client");
+          else fs.unlink(data);
+        });
+      }
+    } else {
+      // create data stream and pipe to response
+      res.on("error", (err) => {
+        console.error("Error in write stream:", err);
+      });
+      let rs = new Readable();
+      rs._read = () => {}; // may be redundant
+      rs.pipe(res);
+      rs.on("error", function (err) {
+        console.error(err);
+        res.status(404).end();
+      });
+      rs.on("error", function (err) {
+        console.error(err);
+        res.status(404).end();
+      });
+      rs.push(data);
+      rs.push(null);
+    }
   } catch (err) {
     console.error(err);
     return next(err);

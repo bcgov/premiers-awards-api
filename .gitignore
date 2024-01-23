@@ -112,3 +112,6 @@ package-lock.json
 
 # Intellij config
 .idea
+
+# Debug Data
+data/

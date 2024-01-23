@@ -5,21 +5,32 @@
  * MIT Licensed
  */
 
-const { PDFDocument } = require('pdf-lib');
-const fs = require('fs');
-const path = require('path');
-const schemaServices = require('./schema.services');
-const sanitizeHtml = require('sanitize-html');
+const { PDFDocument } = require("pdf-lib");
+const fs = require("fs");
+const path = require("path");
+const schemaServices = require("./schema.services");
+const sanitizeHtml = require("sanitize-html");
 const axios = require("axios");
 
 /**
  * Configuration settings
  * */
 const dataPath = process.env.DATA_PATH;
-const allowedTags = [ 'div', 'p', 'br', 'b', 'i', 'em', 'strong', 'ol', 'ul', 'li', 'blockquote' ];
+const allowedTags = [
+  "div",
+  "p",
+  "br",
+  "b",
+  "i",
+  "em",
+  "strong",
+  "ol",
+  "ul",
+  "li",
+  "blockquote",
+];
 // const pageCountMaximum = 5;
-const customFontURL = 'http://localhost:5000/static/css/BCSans.css';
-
+const customFontURL = "http://localhost:5000/static/css/BCSans.css";
 
 /**
  * Generate file ID for nomination packages.
@@ -32,29 +43,44 @@ const customFontURL = 'http://localhost:5000/static/css/BCSans.css';
 const genFileID = function (data) {
   // destructure nomination data
   const {
-    seq='',
-    category='',
-    organizations=[],
-    title='',
-    nominee=''
+    seq = "",
+    category = "",
+    organizations = [],
+    title = "",
+    nominee = "",
   } = data || {};
 
   // build raw file ID string
-  const year = schemaServices.get('year').toString();
-  const {firstname = '', lastname = '' } = nominee || {};
+  const year = schemaServices.get("year").toString();
+  const { firstname = "", lastname = "" } = nominee || {};
   const label = title.slice(0, 15) || `${firstname}_${lastname}`.slice(0, 15);
-  const organization = (organizations || []).map(org => {
-    return schemaServices.lookup('organizations', org).slice(0, 15);
-  }).join('_')
+  const organization = (organizations || [])
+    .map((org) => {
+      return schemaServices.lookup("organizations", org).slice(0, 15);
+    })
+    .join("_");
   // convert file ID to slug
   const fileID = `${category}_${label}_${organization}`
-      .toLowerCase()
-      .replace(/[^\w ]+/g, '_')
-      .replace(/ +/g, '_');
+    .toLowerCase()
+    .replace(/[^\w ]+/g, "_")
+    .replace(/ +/g, "_");
   // include sequence and year
-  return `${('0000' + parseInt(seq)).slice(-5)}-${year.slice(2, 4)}_${fileID}`;
-}
-exports.genFileID = genFileID
+  return `${("0000" + parseInt(seq)).slice(-5)}-${year.slice(2, 4)}_${fileID}`;
+};
+exports.genFileID = genFileID;
+
+const genExportZipFile = function () {
+  const dirPath = path.join(dataPath ? dataPath : "", "temp");
+  // ensure directory path exists
+  fs.mkdir(dirPath, { recursive: true }, (err) => {
+    if (err) throw err;
+  });
+  return path.join(
+    dirPath,
+    `nominations_export_${new Date().toJSON().slice(0, 21)}.zip`
+  );
+};
+exports.genExportZipFile = genExportZipFile;
 
 /**
  * Build HTML table as string
@@ -64,20 +90,21 @@ exports.genFileID = genFileID
 
 const addHTMLTable = (items) => {
   const rows = Object.keys(items)
-      .filter(key => items[key].hasOwnProperty('visible') && items[key].visible)
-      .map(key => {
-        const {label='', value=''} = items[key] || {};
-        return `<tr>
+    .filter((key) => items[key].hasOwnProperty("visible") && items[key].visible)
+    .map((key) => {
+      const { label = "", value = "" } = items[key] || {};
+      return `<tr>
                   <th>${label}</th>
                   <td>${value}</td>
-                </tr>`
-        }).join(' ');
+                </tr>`;
+    })
+    .join(" ");
   return `<table>
             <tbody>
                 ${rows}
             </tbody>
-        </table>`
-}
+        </table>`;
+};
 
 /**
  * Build HTML unordered list as string
@@ -86,10 +113,16 @@ const addHTMLTable = (items) => {
  */
 
 const addHTMLUnorderedList = (items) => {
-  return items.length > 0 ? items.map((item, index) => {
-    return `${index === 0 ? `<ul>` : ''}<li>${item}</li>${index === items.length - 1 ? `</ul>` : ''}`;
-  }).join(' ') : '';
-}
+  return items.length > 0
+    ? items
+        .map((item, index) => {
+          return `${index === 0 ? `<ul>` : ""}<li>${item}</li>${
+            index === items.length - 1 ? `</ul>` : ""
+          }`;
+        })
+        .join(" ")
+    : "";
+};
 
 /**
  * Build HTML ordered list as string
@@ -98,112 +131,142 @@ const addHTMLUnorderedList = (items) => {
  */
 
 const addHTMLOrderedList = (items) => {
-  return items.length > 0 ? items.map((item, index) => {
-    return `${index === 0 ? `<ol>` : ''}<li>${item}</li>${index === items.length - 1 ? `</ol>` : ''}`;
-  }).join(' ') : '';
-}
+  return items.length > 0
+    ? items
+        .map((item, index) => {
+          return `${index === 0 ? `<ol>` : ""}<li>${item}</li>${
+            index === items.length - 1 ? `</ol>` : ""
+          }`;
+        })
+        .join(" ")
+    : "";
+};
 
 /**
  * @param data - nomination data
  * @return doc - pdfkit document
  */
 
-const generateNominationHTML = function(data) {
-
+const generateNominationHTML = function (data) {
   // destructure nomination data
   const {
-    seq='',
-    category='',
-    organizations='',
-    title='',
-    nominee='',
-    nominees='',
-    partners=[],
-    nominators= [],
-    evaluation= {},
-    attachments= []
+    seq = "",
+    category = "",
+    organizations = "",
+    title = "",
+    nominee = "",
+    nominees = "",
+    partners = [],
+    nominators = [],
+    evaluation = {},
+    attachments = [],
   } = data || {};
 
   // creat unique sequence submission ID
-  const submissionID = ('00000' + parseInt(seq)).slice(-5);
+  const submissionID = ("00000" + parseInt(seq)).slice(-5);
 
   // add nominee full name (if exists)
-  const {firstname = '', lastname = '' } = nominee || {};
+  const { firstname = "", lastname = "" } = nominee || {};
 
   // get created date
-  const created = new Date().toLocaleString("en-CA", {timeZone: "America/Vancouver"});
+  const created = new Date().toLocaleString("en-CA", {
+    timeZone: "America/Vancouver",
+  });
 
   const nominationTableItems = [
     {
-      label: 'Created',
+      label: "Created",
       value: created.toString(),
-      visible: true
+      visible: true,
     },
     {
-      label: 'Application Category',
-      value: schemaServices.lookup('categories', category),
-      visible: true
+      label: "Application Category",
+      value: schemaServices.lookup("categories", category),
+      visible: true,
     },
     {
-      label: 'Name of Ministry or eligible organization sponsoring this application',
-      value: addHTMLOrderedList(organizations.map(organization => {
-        return schemaServices.lookup('organizations', organization);
-      })),
-      visible: true
+      label:
+        "Name of Ministry or eligible organization sponsoring this application",
+      value: addHTMLOrderedList(
+        organizations.map((organization) => {
+          return schemaServices.lookup("organizations", organization);
+        })
+      ),
+      visible: true,
     },
     {
-      label: 'Nomination Title',
+      label: "Nomination Title",
       value: title,
-      visible: !!title
+      visible: !!title,
     },
     {
-      label: 'Nominee',
+      label: "Nominee",
       value: `${firstname} ${lastname}`,
-      visible: firstname && lastname
+      visible: firstname && lastname,
     },
     {
-      label: 'Number of Nominees',
+      label: "Number of Nominees",
       value: String(nominees),
-      visible: nominees > 0
+      visible: nominees > 0,
     },
     {
-      label: 'Partners',
-      value: addHTMLUnorderedList(partners.map(partner => {
-        const {organization = ''} = partner || {};
-        return organization;
-      })),
-      visible: partners.length > 0
+      label: "Partners",
+      value: addHTMLUnorderedList(
+        partners.map((partner) => {
+          const { organization = "" } = partner || {};
+          return organization;
+        })
+      ),
+      visible: partners.length > 0,
     },
     {
-      label: 'Nominators',
-      value: addHTMLUnorderedList(nominators.map(nominator => {
-        const {firstname='', lastname='', title='', email='' } = nominator || {};
-        return `${firstname} ${lastname}${title ? ', ' + title : ''}${email ? ', ' + email : ''}`;
-      })),
-      visible: nominators.length > 0
+      label: "Nominators",
+      value: addHTMLUnorderedList(
+        nominators.map((nominator) => {
+          const {
+            firstname = "",
+            lastname = "",
+            title = "",
+            email = "",
+          } = nominator || {};
+          return `${firstname} ${lastname}${title ? ", " + title : ""}${
+            email ? ", " + email : ""
+          }`;
+        })
+      ),
+      visible: nominators.length > 0,
     },
     {
-      label: 'Attachments',
-      value: addHTMLOrderedList(attachments.map((attachment) => {
-        const {label = '', description='', file = {}} = attachment || {};
-        const {originalname='Attachment'} = file || {};
-        return `${label ? label : originalname}${description ? ': ' + description : ''}`;
-      })),
-      visible: attachments.length > 0
+      label: "Attachments",
+      value: addHTMLOrderedList(
+        attachments.map((attachment) => {
+          const { label = "", description = "", file = {} } = attachment || {};
+          const { originalname = "Attachment" } = file || {};
+          return `${label ? label : originalname}${
+            description ? ": " + description : ""
+          }`;
+        })
+      ),
+      visible: attachments.length > 0,
     },
     {
-      label: 'Evaluation Considerations',
-      value: Object.keys(evaluation).map(section => {
-        // confirm section is included in category
-        if (schemaServices.checkSection(section, category)) {
-          // Allow only a super restricted set of tags and attributes
-          const html = sanitizeHtml(evaluation[section], {
-            allowedTags: allowedTags,
-          });
-          return `<h3>${schemaServices.lookup('evaluationSections', section)}</h3><div>${html}</div>`;
-        }
-      }).join(' '),
-      visible: Object.keys(evaluation).length > 0
+      label: "Evaluation Considerations",
+      value: Object.keys(evaluation)
+        .map((section) => {
+          // confirm section is included in category
+          if (schemaServices.checkSection(section, category)) {
+            // Allow only a super restricted set of tags and attributes
+            const html = sanitizeHtml(evaluation[section], {
+              allowedTags: allowedTags,
+            });
+            return `<h3>${schemaServices.lookup(
+              "evaluationSections",
+              section
+            )}</h3><div>${html}</div>`;
+          }
+        })
+        .join(" "),
+      visible: Object.keys(evaluation).length > 0,
     },
   ];
 
@@ -213,6 +276,7 @@ const generateNominationHTML = function(data) {
             <title>${title}</title>
             <link href='${customFontURL}' rel='stylesheet' type='text/css'>
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <meta name="lowquality" content="None"/>
             <style>
                 body {
                   font-family: 'BCSans', Helvetica, sans-serif;
@@ -243,8 +307,7 @@ const generateNominationHTML = function(data) {
             ${addHTMLTable(nominationTableItems)}
         </body>
     </html>`;
-}
-
+};
 
 /**
  * Merge PDF documents into single PDF document
@@ -260,9 +323,14 @@ async function mergePDFDocuments(documents, filePath) {
 
   for (let document of documents) {
     // Use pdf-lib static load (See: https://pdf-lib.js.org/docs/api/classes/pdfdocument#static-load)
-    const uint8Array = fs.readFileSync(document)
-    const pdfDoc = await PDFDocument.load(uint8Array, { ignoreEncryption: true });
-    const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+    const uint8Array = fs.readFileSync(document);
+    const pdfDoc = await PDFDocument.load(uint8Array, {
+      ignoreEncryption: true,
+    });
+    const copiedPages = await mergedPdf.copyPages(
+      pdfDoc,
+      pdfDoc.getPageIndices()
+    );
     copiedPages.forEach((page) => mergedPdf.addPage(page));
   }
 
@@ -278,13 +346,9 @@ async function mergePDFDocuments(documents, filePath) {
  * @returns {Object}
  */
 
-const generateNominationPDF = async function(data, callback) {
-
+const generateNominationPDF = async function (data, callback) {
   // destructure nomination data
-  const {
-    _id='',
-    attachments= []
-  } = data || {};
+  const { _id = "", attachments = [] } = data || {};
 
   // - use unique sequence number to label file
   // - pad sequence with 00000
@@ -292,7 +356,7 @@ const generateNominationPDF = async function(data, callback) {
   const fileId = genFileID(data);
   const basename = `${fileId}_nomination`;
   const nominationFilename = `${basename}.pdf`;
-  const dirPath = path.join(dataPath, 'generated', _id.toString());
+  const dirPath = path.join(dataPath, "generated", _id.toString());
   const nominationFilePath = path.join(dirPath, nominationFilename);
   const mergedFilename = `${basename}_merged.pdf`;
   const mergedFilePath = path.join(dirPath, mergedFilename);
@@ -309,31 +373,33 @@ const generateNominationPDF = async function(data, callback) {
   const file = fs.createWriteStream(nominationFilePath);
   const pdfConverterURL = process.env.PDF_CONVERT_URL;
   const response = await axios({
-    method: 'post',
+    method: "post",
     url: pdfConverterURL,
-    data: {html: nominationHTML, footer: 'Premier\'s Awards'},
-    contentType: 'application/json',
-    responseType: 'stream'
+    data: { html: nominationHTML, footer: "Premier's Awards" },
+    contentType: "application/json",
+    responseType: "stream",
   });
 
   // save PDF file locally
   const stream = response.data.pipe(file);
-  stream.on('finish', async () => {
-
-  // get document page range for nomination portion
-  // const range = doc.bufferedPageRange();
-  // console.log('Pages to submission:', range.start + range.count);
+  stream.on("finish", async () => {
+    // get document page range for nomination portion
+    // const range = doc.bufferedPageRange();
+    // console.log('Pages to submission:', range.start + range.count);
 
     try {
       // [2] merge attachments with main nomination document
       // console.log(`Merging and saving PDF to ${mergedFilePath}`);
 
       let docs = [nominationFilePath];
-      docs.push.apply(docs, attachments.map(attachment => {
-        const {file = {}} = attachment || {};
-        const {path = ''} = file || {};
-        return path;
-      }));
+      docs.push.apply(
+        docs,
+        attachments.map((attachment) => {
+          const { file = {} } = attachment || {};
+          const { path = "" } = file || {};
+          return path;
+        })
+      );
       await mergePDFDocuments(docs, mergedFilePath);
 
       // check if page count is exceeded
@@ -344,11 +410,9 @@ const generateNominationPDF = async function(data, callback) {
       console.log(`Merged PDF file ${mergedFilename} saved.`);
     } catch (err) {
       console.warn(err);
-      return callback(Error('PDFCorrupted'));
+      return callback(Error("PDFCorrupted"));
     }
   });
   return [mergedFilePath, nominationFilePath];
-}
+};
 exports.generateNominationPDF = generateNominationPDF;
-
-
