@@ -341,7 +341,7 @@ exports.exporter = async (req, res, next) => {
       if (fileExists(data)) {
         res.download(data, function (err) {
           if (err) console.log("Error downloading export package to client");
-          else fs.unlink(data);
+          else fs.unlinkSync(data);
         });
       }
     } else {
