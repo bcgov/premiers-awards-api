@@ -115,3 +115,11 @@ package-lock.json
 
 # Debug Data
 data/
+
+# Upload Data
+uploads/
+
+# Docker
+.dockerignore
+compose.yaml
+Dockerfile
