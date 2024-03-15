@@ -115,3 +115,15 @@ package-lock.json
 
 # Debug Data
 data/
+
+# Upload Data
+uploads/
+
+# DB backup data
+*.sql.gz
+*.sql
+
+# Docker
+.dockerignore
+compose.yaml
+Dockerfile
