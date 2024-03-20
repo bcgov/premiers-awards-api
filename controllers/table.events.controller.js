@@ -283,7 +283,7 @@ exports.deleteTable = async (req, res, next) => {
 
     for (let each of table.guests) {
       const guestID = each["_id"];
-      await GuestModel.updateOne({ _id: guestID }, { table: null });
+      await GuestModel.updateOne({ _id: guestID }, { table: null, seat: "" });
     }
 
     for (let each of table.registrations) {
