@@ -39,6 +39,10 @@ const TableSchema = new Schema(
       type: Number,
       required: true,
     },
+    tableindex: {
+      type: Number,
+      required: true,
+    },
     tabletype: {
       type: String,
       required: true,

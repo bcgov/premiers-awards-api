@@ -119,12 +119,14 @@ exports.createTable = async (req, res, next) => {
     if (!result) {
       await TableCounterModel.create({ _id: "tablename", seq: 0, alpha: [] });
     }
+    const tableCount = (await TableModel.count()) + 1;
 
     const guid = genID();
     const name = await createName();
     const {
       tablename = "",
       tablecapacity = null,
+      tableindex = tableCount,
       tabletype = "",
       organizations = [],
     } = req.body || {};
@@ -136,6 +138,7 @@ exports.createTable = async (req, res, next) => {
       guid,
       tablename: finalName,
       tablecapacity,
+      tableindex,
       tabletype,
       organizations,
     });
@@ -175,7 +178,7 @@ exports.generateTableSetup = async (req, res, next) => {
 
     const guestCount = await GuestModel.countDocuments({});
     //default layout
-    const tableCount = 72;
+    const tableCount = 10;
 
     //custom layout based on guests is possible
     //const tableCount = guestCount / 10 > 1 ? Math.ceil(guestCount / 10) + 10 : 1;
@@ -185,11 +188,13 @@ exports.generateTableSetup = async (req, res, next) => {
       const tablename = await createName();
       const tabletype = "Standard";
       const tablecapacity = 10;
+      const tableindex = i + 1;
       const organizations = [];
       await TableModel.create({
         guid,
         tablename,
         tablecapacity,
+        tableindex,
         tabletype,
         organizations,
       });
