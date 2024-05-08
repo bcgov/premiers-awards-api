@@ -213,10 +213,10 @@ exports.remove = async (req, res, next) => {
  */
 exports.resetUsers = async (req, res, next) => {
   try {
-    const nonAdmins = await UserModel.removeMany({
+    const nonAdmins = await UserModel.deleteMany({
       roles: { $nin: ["super-administrator", "administrator"] },
     });
-    res.status(200).response(nonAdmins);
+    res.status(200).json(nonAdmins);
   } catch (err) {
     return next(err);
   }
