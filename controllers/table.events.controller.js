@@ -58,7 +58,7 @@ exports.getAllTables = async (req, res, next) => {
 };
 
 /**
- * Generate PDF document with tables arranged in cols/rows
+ * Generate PDF document with tables arranged in cols/rows - PA-150
  *
  * @param req
  * @param res

@@ -113,7 +113,6 @@ router.get(
   tableController.getTableGuests
 );
 router.get("/seating/pdf", authorizeAdmin, tableController.getPdfLayout);
-
 router.get("/seating/:id/", authorizeAdmin, tableController.getTable);
 
 //settings routes
