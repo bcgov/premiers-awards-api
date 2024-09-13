@@ -499,6 +499,12 @@ exports.generatePdfTableLayout = async function(data, layout) {
         units.rows = 4;
         scale(.72);
       },
+      "9": function() {
+        units.cols = 9;
+        units.left = 60;
+        units.rows = 4;
+        scale(.68);
+      },
       "10": function() {
         units.left = 60;
         units.top += 20;
