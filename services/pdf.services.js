@@ -519,6 +519,13 @@ exports.generatePdfTableLayout = async function(data, layout) {
         units.rows = 5;
         scale(.55);
       },
+      "12": function() {
+        units.left = 50;
+        units.top += 30;
+        units.cols = 12;
+        units.rows = 6;
+        scale(.5);
+      },
       default() {
         layouts["8"].call();
       }
@@ -702,7 +709,7 @@ exports.generatePdfTableLayout = async function(data, layout) {
             y = coords.y + ( units.radius / 2 ) - (index-1) * lineHeight;
 
           return [
-            coords.x - ( units.radius / 2 ) - 6, // get the x as far left as possible
+            coords.x - ( units.radius / 2 ) - 3, // get the x as far left as possible
             y
           ];
         });
