@@ -5,25 +5,29 @@
  * MIT Licensed
  */
 
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const Schema = mongoose.Schema;
 
 const SettingsSchema = new Schema({
   type: {
     type: String,
-    required: true
+    required: true,
   },
   label: {
     type: String,
-    required: true
+    required: true,
   },
   value: {
-    type: String,
-    required: true
+    type: Schema.Types.Mixed,
+    required: true,
   },
 });
 
-const SettingsAdminModel = mongoose.model('Setting', SettingsSchema, 'settings');
+const SettingsAdminModel = mongoose.model(
+  "Setting",
+  SettingsSchema,
+  "settings"
+);
 
 module.exports = SettingsAdminModel;

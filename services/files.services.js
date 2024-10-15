@@ -17,6 +17,60 @@ const { genFileID, genExportZipFile } = require("./pdf.services");
 const dataPath = process.env.DATA_PATH;
 const acceptedMIMETypes = ["application/pdf"];
 
+class BcZip {
+
+  constructor() {
+
+    // Trim file names in Zip files for Windows (PA-147)
+    // Was going to go for Extends, however, AdmZip is not a valid class, so overriding did not go as planned.
+
+    this.zip = new AdmZip();
+    this.index = 0;
+  }
+
+  addLocalFile(file/*, folder*/) {
+
+    if ( fs.existsSync(file) ) {
+
+      const buffer = fs.readFileSync(file);
+      
+      let fileName = file.split("/").pop(); // get the actual file name, minus the path
+      
+      this.index++;
+      /* 
+        do something smart to remove all the clutter from the file names, eg:
+        remove attachment_99416100-b2ef-11ed-97a1-231e10b89f20
+        remove 00463-23_
+        remove _nomination_merged
+        remove _nomination
+      */
+     
+     fileName = fileName.replace(/^attachment_[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}_/, "");
+     fileName = fileName.replace(/^\d{5}-\d{2}_/, "");
+     fileName = fileName.replace(/_nomination_merged/, "");
+     fileName = fileName.replace(/_nomination/, "");
+     
+     //console.log(`Zipping ${file} as ${fileName}`);
+     return this.zip.addFile(`${this.index}_${fileName}`, buffer);
+
+    } else {
+
+      console.log(`addLocalFile, ${file} does not exist`);
+    }
+    
+  }
+
+  toBuffer() {
+
+    return this.zip.toBuffer();
+  }
+
+  writeZip(zipFilePath) {
+
+    return this.zip.writeZip(zipFilePath);
+  }
+}
+
 /**
  * File uploader middleware (multer)
  * - Uploads attached files to new directory generated for each nomination as:
@@ -128,8 +182,8 @@ exports.isWordDoc = isWordDoc;
  */
 
 const createZIP = async function (zipEntries, zipRoot) {
-  // initialize zip file
-  const zip = new AdmZip();
+  // initialize zip file from new BcZip class for trimmed files names (PA-147)
+  const zip = new BcZip();
 
   // add listed directories
   (zipEntries || []).map((zipEntry) => {
@@ -150,8 +204,8 @@ exports.createZIP = createZIP;
  */
 
 const createNominationPackage = async function (nominations) {
-  // initialize zip file
-  const zip = new AdmZip();
+  // initialize zip file from new BcZip class for trimmed files names (PA-147)
+  const zip = new BcZip();
   // create folder entries
   await Promise.all(
     nominations.map(async (nomination) => {

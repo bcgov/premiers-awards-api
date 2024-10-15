@@ -247,6 +247,7 @@ exports.registerGuest = async (req, res, next) => {
       hascustompronouns = false || true,
       hasexternalorganization = false || true,
       supportingfinalist = "",
+      seat = "",
       accessibility = {
         wheelchairrequired: false,
         attendantrequired: false,
@@ -279,6 +280,7 @@ exports.registerGuest = async (req, res, next) => {
       hascustompronouns,
       supportingfinalist,
       hasexternalorganization,
+      seat,
     });
     //const { id = null } = registration || {};
 

@@ -68,6 +68,9 @@ const GuestSchema = new Schema(
       type: String,
       required: true,
     },
+    seat: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

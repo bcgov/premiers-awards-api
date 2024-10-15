@@ -11,6 +11,7 @@ const GuestModel = require("../models/guest.events.model.js");
 const TableModel = require("../models/table.events.model.js");
 const TableCounterModel = require("../models/counter.events.model.js");
 const RegistrationModel = require("../models/registration.events.model.js");
+const { generatePdfTableLayout } = require("../services/pdf.services.js");
 
 /**
  * Table Counter name Generator.
@@ -50,6 +51,49 @@ exports.getAllTables = async (req, res, next) => {
     return res.status(200).json(tables);
   } catch (err) {
     console.error(err);
+    return next(err);
+  }
+};
+
+/**
+ * Generate PDF document with tables arranged in cols/rows - PA-150
+ *
+ * @param req
+ * @param res
+ * @param next
+ * @src public
+ */
+
+exports.getPdfLayout = async (req, res, next) => {
+
+  const { layout = "8", format = "binary" } = req.query;
+  
+  try {
+    const data = await TableModel.find({}).populate("guests");
+    
+    const pdfDoc = await generatePdfTableLayout(data, layout);
+
+    if ( format == "base64" ) {
+
+      const base64Uri = await pdfDoc.saveAsBase64({ dataUri: true });
+      res.writeHead(200, {
+        'Content-Type': 'text/plain',
+        'Content-Length': base64Uri.length
+      });
+      res.end(base64Uri); 
+    
+    } else {
+
+      const pdfUri = await pdfDoc.save();
+      res.writeHead(200, {
+        'Content-Type': 'application/pdf',
+        'Content-Length': pdfUri.length
+      });
+      res.end(pdfUri); 
+    }
+  
+  } catch (err) {
+
     return next(err);
   }
 };

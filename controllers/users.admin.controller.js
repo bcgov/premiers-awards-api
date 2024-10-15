@@ -203,6 +203,26 @@ exports.remove = async (req, res, next) => {
 };
 
 /**
+ * Removes all non-admin users
+ *
+ * @param req
+ * @param res
+ * @param {Function} next
+ * @method post
+ * @src public
+ */
+exports.resetUsers = async (req, res, next) => {
+  try {
+    const nonAdmins = await UserModel.deleteMany({
+      roles: { $nin: ["super-administrator", "administrator"] },
+    });
+    res.status(200).json(nonAdmins);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+/**
  * Auto-login using SSO GUID and username
  *
  * @param req
