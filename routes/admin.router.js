@@ -33,8 +33,8 @@ router.get("/users/resetusers/", authorizeAdmin, userController.resetUsers);
  * Admin settings routes.
  */
 
-router.get("/settings/view/", authorizeSuperAdmin, settingsController.getAll);
-router.get("/settings/view/:id", authorizeData, settingsController.get);
+router.get("/settings/view/", settingsController.getAll);
+router.get("/settings/view/:id", settingsController.get);
 router.get(
   "/settings/type/:type/",
   authorizeData,
