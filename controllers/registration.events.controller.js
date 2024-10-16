@@ -264,6 +264,7 @@ exports.registerGuest = async (req, res, next) => {
         nutfree: false,
         other: false,
       },
+      notes = "",
     } = req.body || {};
     // insert new record into collection
     const newGuest = await GuestModel.create({
@@ -281,6 +282,7 @@ exports.registerGuest = async (req, res, next) => {
       supportingfinalist,
       hasexternalorganization,
       seat,
+      notes,
     });
     //const { id = null } = registration || {};
 
