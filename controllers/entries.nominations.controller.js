@@ -19,6 +19,8 @@ const { Readable } = require("stream");
 const { checkCategory } = require("../services/schema.services");
 const mongoose = require("mongoose");
 const settings = require("../services/schema.services");
+const SettingsModel = require('../models/settings.admin.model')
+
 const fs = require("fs");
 
 // limit number of draft nomination submissions
@@ -399,3 +401,35 @@ exports.download = async (req, res, next) => {
     return next(err);
   }
 };
+
+/** 
+ * PA-149 Check if nominations are still open based on open/close dates. Defaults to true if no values are set.
+ * 
+ */
+
+exports.isOpen = async (req, res, next) => {
+
+  const settings = await SettingsModel.findOne({type: "globalSettings"});
+  let open = false;
+
+  if ( settings && settings.value ) {
+
+    const { nominationsopen, nominationsclose } = settings.value;
+
+    if ( nominationsopen && nominationsclose ) {
+
+      const now = new Date().getTime();
+      try {
+        
+        open = Date.parse(nominationsopen) <= now && Date.parse(nominationsclose) >= now;
+      } catch (error) {
+
+        // If parsing or something else fails, default to true
+        open = true;
+      }
+    }
+    
+  }
+  res.status(200).json( { open } );
+};
+
