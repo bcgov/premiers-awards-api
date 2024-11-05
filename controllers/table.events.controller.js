@@ -36,6 +36,34 @@ const createName = async function () {
   }
 };
 
+/** 
+ * Return number of tables 
+ * PA-185 Added new counter which is to be used when creating a new table 
+**/
+
+const getTableCount = async function() {
+
+  try {
+
+    const result = await TableCounterModel.exists({ _id: "tablename" });
+    if (!result) {
+      await TableCounterModel.create({ _id: "tablename", seq: 0, alpha: [] });
+    }
+
+    const tablecount = await TableCounterModel.aggregate([{$project: { count: { $size: "$alpha" }}}]);
+    
+    if ( !tablecount ) {
+      return -1;
+    }
+
+    return tablecount[0].count;
+
+  } catch (err) {
+    console.log(err);
+    return -1;
+  }
+}
+
 /**
  * Retrieve all table data.
  *
@@ -147,6 +175,14 @@ exports.getTableGuests = async (req, res, next) => {
   }
 };
 
+// PA-185 Added new count to route for future use
+
+exports.getTableCount = async (req, res, next) => {
+
+  const count = await getTableCount();
+  return res.status(200).json({ count });
+};
+
 /**
  * Create new table
  *
@@ -175,6 +211,9 @@ exports.createTable = async (req, res, next) => {
 
     const finalName = tablename !== "" ? tablename : name;
 
+    // PA-185 Get the table count which is required for the table creation index 
+    const tableindex = await getTableCount();
+
     // insert new record into collection
     const table = await TableModel.create({
       guid,
@@ -182,6 +221,7 @@ exports.createTable = async (req, res, next) => {
       tablecapacity,
       tabletype,
       organizations,
+      tableindex
     });
 
     await TableCounterModel.updateOne(
@@ -236,6 +276,7 @@ exports.generateTableSetup = async (req, res, next) => {
         tablecapacity,
         tabletype,
         organizations,
+        tableindex: i
       });
       await TableCounterModel.updateOne(
         { _id: "tablename" },

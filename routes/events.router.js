@@ -112,6 +112,7 @@ router.get(
   authorizeAdmin,
   tableController.getTableGuests
 );
+router.get("/seating/count", authorizeAdmin, tableController.getTableCount); // PA-185 Added new count to route for future use
 router.get("/seating/pdf", authorizeAdmin, tableController.getPdfLayout);
 router.get("/seating/:id/", authorizeAdmin, tableController.getTable);
 
