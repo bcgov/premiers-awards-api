@@ -33,7 +33,7 @@ router.get('/unsubmit/:id', authorizeAdmin, dataController.unsubmit);
 router.post('/delete/:id', authorizeData, dataController.delete);
 router.get('/export/:format', authorizeMultiData, dataController.exporter);
 router.get('/download/:id', authorizeData, dataController.download);
-router.get('/open', authorizeData, dataController.isOpen);
+router.get('/open', authorizeNominator, dataController.isOpen);
 
 /**
  * Nomination attachments routes
