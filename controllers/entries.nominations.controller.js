@@ -19,10 +19,44 @@ const { Readable } = require("stream");
 const { checkCategory } = require("../services/schema.services");
 const mongoose = require("mongoose");
 const settings = require("../services/schema.services");
+const SettingsModel = require('../models/settings.admin.model')
+
 const fs = require("fs");
 
 // limit number of draft nomination submissions
 const maxNumberOfDrafts = settings.get("maxDrafts");
+
+/** 
+ * PA-149 Check if nominations are still open based on open/close dates. Defaults to true if no values are set.
+ * 
+ */
+
+const isOpen = async () => {
+
+  const settings = await SettingsModel.findOne({type: "globalSettings"});
+  let open = false;
+
+  if ( settings && settings.value ) {
+
+    const { nominationsopen, nominationsclose } = settings.value;
+
+    if ( nominationsopen && nominationsclose ) {
+
+      const now = new Date().getTime();
+      try {
+        
+        open = Date.parse(nominationsopen) <= now && Date.parse(nominationsclose) >= now;
+      } catch (error) {
+
+        // If parsing or something else fails, default to true
+        open = true;
+      }
+    }
+    
+  }
+
+  return open;
+}
 
 /**
  * Get nomination data by ID.
@@ -195,6 +229,14 @@ exports.update = async (req, res, next) => {
 exports.submit = async (req, res, next) => {
   try {
     let id = req.params.id;
+
+    // PA-149 Block any form of submit if nominations have closed
+    const open = await isOpen();
+
+    if ( !open ) {
+
+      return next(Error("nominationsClosed"));
+    }
 
     // look up nomination exists
     const nomination = await NominationModel.findById(id);
@@ -399,3 +441,16 @@ exports.download = async (req, res, next) => {
     return next(err);
   }
 };
+
+/** 
+ * PA-149 Check if nominations are still open based on open/close dates. Defaults to true if no values are set.
+ * 
+ */
+
+exports.isOpen = async (req, res, next) => {
+
+  const open = await isOpen();
+
+  res.status(200).json( { open } );
+};
+

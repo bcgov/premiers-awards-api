@@ -46,7 +46,7 @@ class BcZip {
       */
      
      fileName = fileName.replace(/^attachment_[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}_/, "");
-     fileName = fileName.replace(/^\d{5}-\d{2}_/, "");
+     //fileName = fileName.replace(/^\d{5}-\d{2}_/, "");
      fileName = fileName.replace(/_nomination_merged/, "");
      fileName = fileName.replace(/_nomination/, "");
      
