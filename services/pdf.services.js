@@ -327,11 +327,52 @@ async function mergePDFDocuments(documents, filePath) {
     const pdfDoc = await PDFDocument.load(uint8Array, {
       ignoreEncryption: true,
     });
+
+    // PA-205 Get the page indices and add each page manually to account for PDF errors
+    let pdfDocIndices;
+
+    try {
+
+      pdfDocIndices = pdfDoc.getPageIndices();
+     
+    }
+    catch {
+      
+      // Default to 1 page
+      pdfDocIndices = [ 1 ];
+    }
+
+    /*
+    // Removed for PA-205
     const copiedPages = await mergedPdf.copyPages(
       pdfDoc,
-      pdfDoc.getPageIndices()
+      pdfDocIndices
     );
     copiedPages.forEach((page) => mergedPdf.addPage(page));
+    */
+
+    for ( let pageNumber of pdfDocIndices ) {
+    
+      try {
+
+        const copiedPage = await mergedPdf.copyPages(
+          pdfDoc,
+          [pageNumber]
+        );
+        mergedPdf.addPage(copiedPage[0]) ;
+      }
+      catch {
+
+        // Add new page to merged PDF as placeholder with notice text of failure
+        const newPage = mergedPdf.addPage();
+
+        newPage.moveTo(5, 400);
+        newPage.drawText(`Failed to attach page ${pageNumber+1} of file:`, { size: 12 });
+        newPage.moveTo(5, 370);
+        newPage.drawText(document.split("/").pop(), { size: 10 });
+      }
+
+    }    
   }
 
   // save merged file
