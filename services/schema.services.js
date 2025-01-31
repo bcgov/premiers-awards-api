@@ -5,192 +5,60 @@
  * MIT Licensed
  */
 
+const SettingsModel = require("../models/settings.admin.model");
+
 /**
- * Lookup tables for schema options
- *
- */
+ * get enumerated data by key
+ * **/
 
-const schemaData = {
-  maxDrafts: 60,
-  maxAttachments: 5,
-  year: 2023,
-  status: [
-    { value: "draft", text: "Draft" },
-    { value: "submitted", text: "Submitted" },
-  ],
-  roles: [
-    { value: "inactive", text: "Inactive" },
-    { value: "nominator", text: "Nominator" },
-    { value: "administrator", text: "Administrator" },
-    { value: "super-administrator", text: "Super-Administrator" },
-  ],
-  categories: [
-    {
-      value: "emerging-leader",
-      text: "Emerging Leader",
-      sections: [
-        "summary",
-        "context",
-        "valuing_people",
-        "commitment",
-        "impact",
-      ],
-    },
-    {
-      value: "evidence-based-design",
-      text: "Evidence-Based Design",
-      sections: ["summary", "context", "complexity", "approach", "impact"],
-    },
-    {
-      value: "innovation",
-      text: "Innovation",
-      sections: ["summary", "context", "complexity", "approach", "impact"],
-    },
-    {
-      value: "leadership",
-      text: "Leadership",
-      sections: [
-        "summary",
-        "context",
-        "valuing_people",
-        "complexity",
-        "commitment",
-        "impact",
-      ],
-    },
-    {
-      value: "legacy",
-      text: "Legacy",
-      sections: [
-        "summary",
-        "context",
-        "complexity",
-        "valuing_people",
-        "contribution",
-        "impact",
-      ],
-    },
-    {
-      value: "organizational-excellence",
-      text: "Organizational Excellence",
-      sections: ["summary", "context", "complexity", "approach", "impact"],
-    },
-    {
-      value: "partnership",
-      text: "Partnership",
-      sections: ["summary", "context", "complexity", "approach", "impact"],
-    },
-    {
-      value: "regional-impact",
-      text: "Regional Impact",
-      sections: ["summary", "context", "complexity", "approach", "impact"],
-    },
-  ],
-  evaluationSections: [
-    { value: "summary", text: "Summary" },
-    { value: "context", text: "Context" },
-    { value: "complexity", text: "Complexity" },
-    { value: "approach", text: "Approach" },
-    { value: "valuing_people", text: "Valuing People" },
-    { value: "commitment", text: "Commitment to the Organization" },
-    {
-      value: "contribution",
-      text: "Contribution to BC Public Service Excellence",
-    },
-    { value: "impact", text: "Impact" },
-  ],
-  organizations: [
-    {
-      value: "org-1",
-      text: "Post-Secondary Education and Future Skills",
-    },
-    { value: "org-2", text: "Agriculture and Food" },
-    { value: "org-3", text: "Attorney General" },
-    { value: "org-4", text: "Children and Family Development" },
-    { value: "org-5", text: "Citizens’ Services" },
-    { value: "org-6", text: "Education and Child Care" },
-    {
-      value: "org-7",
-      text: "Emergency Management and Climate Readiness",
-    },
-    {
-      value: "org-8",
-      text: "Energy, Mines and Low Carbon Innovation",
-    },
-    {
-      value: "org-9",
-      text: "Environment and Climate Change Strategy",
-    },
-    { value: "org-10", text: "Finance" },
-    {
-      value: "org-11",
-      text: "Forests",
-    },
-    { value: "org-12", text: "Health" },
-    {
-      value: "org-13",
-      text: "Indigenous Relations and Reconciliation",
-    },
-    {
-      value: "org-14",
-      text: "Jobs, Economic Development and Innovation",
-    },
-    { value: "org-15", text: "Labour" },
-    { value: "org-16", text: "Mental Health and Addictions" },
-    { value: "org-17", text: "Municipal Affairs" },
-
-    { value: "org-18", text: "Public Safety and Solicitor General" },
-    {
-      value: "org-19",
-      text: "Social Development & Poverty Reduction",
-    },
-    { value: "org-20", text: "Tourism, Arts, Culture and Sport" },
-    { value: "org-21", text: "Transportation and Infrastructure" },
-    { value: "org-22", text: "BC Public Service Agency" },
-    {
-      value: "org-23",
-      text: "Government Communications and Public Engagement",
-    },
-    { value: "org-24", text: "Office of the Premier" },
-    { value: "org-25", text: "Water, Land and Resource Stewardship" },
-    { value: "org-26", text: "Housing" },
-  ],
-  nomineeTypes: [
-    { value: "partner", text: "Partner" },
-    { value: "nominee", text: "Nominee" },
-  ],
-  mimeTypes: [
-    { value: "application/pdf", text: "PDF" },
-    { value: "application/doc", text: "MS Word" },
-  ],
+exports.get = async (key) => {
+  return await SettingsModel.findOne({ type: key });
 };
 
 /**
  * get enumerated data by key
  * **/
 
-exports.get = (key) => {
-  return schemaData[key] !== "undefined" ? schemaData[key] : null;
+exports.lookup = async (settingType, value) => {
+  try {
+    const setting = await SettingsModel.findOne({ type: settingType }).exec();
+
+    if (setting === "undefined") return null;
+    const found = setting.value.filter((item) => item.value === value);
+    return found.length > 0 ? found[0].text : null;
+  } catch (e) {
+    console.log(e);
+  }
 };
 
-/**
- * get enumerated data by key
- * **/
-
-exports.lookup = (key, value) => {
-  if (schemaData[key] === "undefined") return null;
-  const found = schemaData[key].filter((item) => item.value === value);
-  return found.length > 0 ? found[0].text : null;
+exports.lookupByKey = async (settingType, lookupKey) => {
+  let setting = await SettingsModel.findOne({ type: settingType }).exec();
+  //let setting = "undefined";
+  if (setting === "undefined") return null;
+  const found = setting.value.filter((item) => item.key === lookupKey);
+  return found.length > 0 ? found[0].label : null;
 };
 
 /**
  * check if category contains given section
  * **/
 
-exports.checkSection = (section, category) => {
+exports.checkSection = async (section, category) => {
+  const categories = (await SettingsModel.findOne({ type: "categories" }))
+    .value;
+
+  const filter = categories.filter((cat) => {
+    return (
+      cat.key === category && cat.evaluation.find((sec) => sec.id === section)
+    );
+  });
   return (
-    schemaData["categories"].filter((cat) => {
-      return cat.value === category && cat.sections.includes(section);
+    categories.filter((cat) => {
+      return (
+        cat.key === category &&
+        cat.key === category &&
+        cat.evaluation.find((sec) => sec === section)
+      );
     }).length > 0
   );
 };
@@ -199,9 +67,10 @@ exports.checkSection = (section, category) => {
  * check if category exists
  * **/
 
-exports.checkCategory = (category) => {
+exports.checkCategory = async (category) => {
+  let categories = await SettingsModel.find({ type: "categories" });
   return (
-    schemaData["categories"].filter((cat) => {
+    categories.filter((cat) => {
       return cat.value === category;
     }).length > 0
   );
