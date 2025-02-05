@@ -134,7 +134,8 @@ exports.create = async (req, res, next) => {
   try {
     // retrieve category
     const { category = null } = req.params || {};
-    if (!checkCategory(category)) return next(new Error("notFound"));
+    // Added await keyword due to checkCategory being async
+    if (!await checkCategory(category)) return next(new Error("notFound"));
 
     // retrieve guid and lookup user
     const { guid = null } = res.locals.user || "";
@@ -196,7 +197,8 @@ exports.update = async (req, res, next) => {
     const nomination = await NominationModel.findById(id);
     if (!nomination) return next(Error("invalidInput"));
 
-    console.log(data);
+    // Removed due to output making debugging other actions difficult 
+    //console.log(data);
 
     // reject updates to submitted nominations
     const { submitted = false } = nomination || {};

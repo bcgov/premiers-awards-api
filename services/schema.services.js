@@ -22,7 +22,8 @@ exports.get = async (key) => {
 exports.lookup = async (settingType, value) => {
   try {
     const setting = await SettingsModel.findOne({ type: settingType }).exec();
-
+    console.log(settingType, value);
+    console.log(setting);
     if (setting === "undefined") return null;
     const found = setting.value.filter((item) => item.value === value);
     return found.length > 0 ? found[0].text : null;
@@ -47,16 +48,19 @@ exports.checkSection = async (section, category) => {
   const categories = (await SettingsModel.findOne({ type: "categories" }))
     .value;
 
-  const filter = categories.filter((cat) => {
-    return (
-      cat.key === category && cat.evaluation.find((sec) => sec.id === section)
-    );
-  });
+  /*
+    // Not being used.
+    const filter = categories.filter((cat) => {
+      return (
+        cat.key === category && cat.evaluation.find((sec) => sec.id === section)
+      );
+    });
+  */
   return (
     categories.filter((cat) => {
       return (
         cat.key === category &&
-        cat.key === category &&
+        // duplicate check cat.key === category &&
         cat.evaluation.find((sec) => sec === section)
       );
     }).length > 0
@@ -68,10 +72,14 @@ exports.checkSection = async (section, category) => {
  * **/
 
 exports.checkCategory = async (category) => {
-  let categories = await SettingsModel.find({ type: "categories" });
+  // Changed to (await .findOne()).value
+  let categories = (await SettingsModel.findOne({ type: "categories" }))
+    .value;
   return (
     categories.filter((cat) => {
-      return cat.value === category;
+      
+      // Change from .value to .key for matching
+      return cat.key === category;
     }).length > 0
   );
 };
