@@ -102,58 +102,120 @@ const schemaData = {
   organizations: [
     {
       value: "org-1",
-      text: "Post-Secondary Education and Future Skills",
+      text: "Agriculture and Food",
     },
-    { value: "org-2", text: "Agriculture and Food" },
-    { value: "org-3", text: "Attorney General" },
-    { value: "org-4", text: "Children and Family Development" },
-    { value: "org-5", text: "Citizens’ Services" },
-    { value: "org-6", text: "Education and Child Care" },
+    {
+      value: "org-2",
+      text: "Attorney General",
+    },
+    {
+      value: "org-3",
+      text: "Children and Family Development",
+    },
+    {
+      value: "org-4",
+      text: "Citizens’ Services",
+    },
+    {
+      value: "org-5",
+      text: "Critical Minerals",
+    },
+    {
+      value: "org-6",
+      text: "Education and Child Care",
+    },
     {
       value: "org-7",
       text: "Emergency Management and Climate Readiness",
     },
     {
       value: "org-8",
-      text: "Energy, Mines and Low Carbon Innovation",
+      text: "Energy and Climate Solutions",
     },
     {
       value: "org-9",
-      text: "Environment and Climate Change Strategy",
+      text: "Environment and Parks",
     },
-    { value: "org-10", text: "Finance" },
+    {
+      value: "org-10",
+      text: "Finance",
+    },
     {
       value: "org-11",
       text: "Forests",
     },
-    { value: "org-12", text: "Health" },
+    {
+      value: "org-12",
+      text: "Health",
+    },
     {
       value: "org-13",
-      text: "Indigenous Relations and Reconciliation",
+      text: "Housing and Municipal Affairs",
     },
     {
       value: "org-14",
+      text: "Indigenous Relations and Reconciliation",
+    },
+    {
+      value: "org-15",
+      text: "Infrastructure",
+    },
+    {
+      value: "org-16",
       text: "Jobs, Economic Development and Innovation",
     },
-    { value: "org-15", text: "Labour" },
-    { value: "org-16", text: "Mental Health and Addictions" },
-    { value: "org-17", text: "Municipal Affairs" },
-
-    { value: "org-18", text: "Public Safety and Solicitor General" },
+    {
+      value: "org-17",
+      text: "Labour",
+    },
+    {
+      value: "org-18",
+      text: "Post-Secondary Education and Future Skills",
+    },
     {
       value: "org-19",
-      text: "Social Development & Poverty Reduction",
+      text: "Public Safety and Solicitor General",
     },
-    { value: "org-20", text: "Tourism, Arts, Culture and Sport" },
-    { value: "org-21", text: "Transportation and Infrastructure" },
-    { value: "org-22", text: "BC Public Service Agency" },
+    {
+      value: "org-20",
+      text: "Social Development and Poverty Reduction",
+    },
+    {
+      value: "org-21",
+      text: "Tourism, Arts, Culture and Sport",
+    },
+    {
+      value: "org-22",
+      text: "Transportation and Transit",
+    },
     {
       value: "org-23",
+      text: "Water, Land and Resource Stewardship",
+    },
+    {
+      value: "org-24",
+      text: "BC Public Service Agency",
+    },
+    {
+      value: "org-25",
+      text: "Crown Agencies Secretariat",
+    },
+    {
+      value: "org-26",
+      text: "Declaration Act Secretariat",
+    },
+    {
+      value: "org-27",
       text: "Government Communications and Public Engagement",
     },
-    { value: "org-24", text: "Office of the Premier" },
-    { value: "org-25", text: "Water, Land and Resource Stewardship" },
-    { value: "org-26", text: "Housing" },
+    {
+      value: "org-28",
+      text: "Environmental Assessment Office",
+    },
+    {
+      value: "org-29",
+      text: "Office of the Premier",
+    },
   ],
   nomineeTypes: [
     { value: "partner", text: "Partner" },
