@@ -51,5 +51,9 @@ router.get(
   authorizeSuperAdmin,
   settingsController.delete
 );
+router.get(
+  "/settings/regeneratenominationpdfs",
+  settingsController.regenerateNominationPDFs
+);
 
 module.exports = router;
