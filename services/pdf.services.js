@@ -173,6 +173,7 @@ const generateNominationHTML = async function (data) {
     nominators = [],
     evaluation = {},
     attachments = [],
+    updatedAt,
   } = data || {};
 
   // creat unique sequence submission ID
@@ -181,8 +182,8 @@ const generateNominationHTML = async function (data) {
   // add nominee full name (if exists)
   const { firstname = "", lastname = "" } = nominee || {};
 
-  // get created date
-  const created = new Date().toLocaleString("en-CA", {
+  // get last updated date
+  const created = new Date(updatedAt).toLocaleString("en-CA", {
     timeZone: "America/Vancouver",
   });
 
@@ -354,14 +355,10 @@ async function mergePDFDocuments(documents, filePath) {
     let pdfDocIndices;
 
     try {
-
       pdfDocIndices = pdfDoc.getPageIndices();
-     
-    }
-    catch {
-      
+    } catch {
       // Default to 1 page
-      pdfDocIndices = [ 1 ];
+      pdfDocIndices = [1];
     }
 
     /*
@@ -373,28 +370,22 @@ async function mergePDFDocuments(documents, filePath) {
     copiedPages.forEach((page) => mergedPdf.addPage(page));
     */
 
-    for ( let pageNumber of pdfDocIndices ) {
-    
+    for (let pageNumber of pdfDocIndices) {
       try {
-
-        const copiedPage = await mergedPdf.copyPages(
-          pdfDoc,
-          [pageNumber]
-        );
-        mergedPdf.addPage(copiedPage[0]) ;
-      }
-      catch {
-
+        const copiedPage = await mergedPdf.copyPages(pdfDoc, [pageNumber]);
+        mergedPdf.addPage(copiedPage[0]);
+      } catch {
         // Add new page to merged PDF as placeholder with notice text of failure
         const newPage = mergedPdf.addPage();
 
         newPage.moveTo(5, 400);
-        newPage.drawText(`Failed to attach page ${pageNumber+1} of file:`, { size: 12 });
+        newPage.drawText(`Failed to attach page ${pageNumber + 1} of file:`, {
+          size: 12,
+        });
         newPage.moveTo(5, 370);
         newPage.drawText(document.split("/").pop(), { size: 10 });
       }
-
-    }    
+    }
   }
 
   // save merged file
