@@ -160,6 +160,7 @@ const generateNominationHTML = function (data) {
     nominators = [],
     evaluation = {},
     attachments = [],
+    updatedAt,
   } = data || {};
 
   // creat unique sequence submission ID
@@ -168,8 +169,8 @@ const generateNominationHTML = function (data) {
   // add nominee full name (if exists)
   const { firstname = "", lastname = "" } = nominee || {};
 
-  // get created date
-  const created = new Date().toLocaleString("en-CA", {
+  // get last updated date
+  const created = new Date(updatedAt).toLocaleString("en-CA", {
     timeZone: "America/Vancouver",
   });
 
