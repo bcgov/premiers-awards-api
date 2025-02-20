@@ -144,8 +144,9 @@ exports.delete = async (req, res, next) => {
     return next(err);
   }
 };
+
 /**
- * Remove setting
+ * Regenerate all nomination and merged nomination PDFs, keeping timestamps intact
  *
  * @param req
  * @param res
@@ -160,14 +161,14 @@ exports.regenerateNominationPDFs = async (req, res, next) => {
       .populate("attachments")
       .populate("owner");
 
-    nominations.forEach(async (nominate) => {
-      if (nominate.submitted) {
-        const nomination = await NominationModel.findById(nominate.id);
+    for (let nomination of nominations) {
+      if (nomination.submitted) {
+        let id = nomination.id;
         if (!nomination) return next(new Error("invalidInput"));
 
         // lookup attachments
         nomination.attachments = await AttachmentModel.find({
-          nomination: nominate.id,
+          nomination: id,
         });
 
         // generate downloadable PDF version
@@ -186,7 +187,7 @@ exports.regenerateNominationPDFs = async (req, res, next) => {
           timestamps: false,
         });
       }
-    });
+    }
 
     res.status(200).json(response);
   } catch (err) {
