@@ -6,6 +6,9 @@
  */
 
 const SettingsModel = require("../models/settings.admin.model");
+const NominationModel = require("../models/entry.nominations.model");
+const AttachmentModel = require("../models/attachment.nominations.model");
+
 const { generateNominationPDF } = require("../services/pdf.services");
 
 /**
@@ -189,7 +192,7 @@ exports.regenerateNominationPDFs = async (req, res, next) => {
       }
     }
 
-    res.status(200).json(response);
+    res.status(200);
   } catch (err) {
     return next(err);
   }
