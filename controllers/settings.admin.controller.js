@@ -197,3 +197,13 @@ exports.regenerateNominationPDFs = async (req, res, next) => {
     return next(err);
   }
 };
+
+exports.deleteallnominations = async (req, res, next) => {
+  try {
+    // look up setting
+    const response = await NominationModel.deleteMany({});
+    if (!response) return next(Error("default"));
+    res.status(200).json(response);
+  } catch (err) {
+    return next(err);
+  }

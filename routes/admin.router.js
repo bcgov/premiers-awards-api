@@ -55,5 +55,9 @@ router.get(
   "/settings/regeneratenominationpdfs",
   settingsController.regenerateNominationPDFs
 );
+router.get(
+  "/settings/deleteallnominations",
+  settingsController.deleteallnominations
+);
 
 module.exports = router;
