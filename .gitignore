@@ -107,9 +107,6 @@ dist
 # TernJS port file
 .tern-port
 
-# Package locked
-package-lock.json
-
 # Intellij config
 .idea
 
