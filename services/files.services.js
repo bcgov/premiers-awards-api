@@ -120,7 +120,7 @@ const fileFilter = function (req, file, next) {
   }
 };
 
-const uploader = multer({ storage: storage, fileFilter: fileFilter });
+const uploader = multer({ storage: storage, fileFilter: fileFilter, limits: {fieldSize: 1024 * 1024 * 100, fileSize: 1024 * 1024 * 100} });
 exports.uploader = uploader.single("attached");
 
 /**
