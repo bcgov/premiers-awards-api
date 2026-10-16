@@ -40,14 +40,14 @@ class BcZip {
       /* 
         do something smart to remove all the clutter from the file names, eg:
         remove attachment_99416100-b2ef-11ed-97a1-231e10b89f20
-        remove 00463-23_
-        remove _nomination_merged
+        //remove 00463-23_ Added these 2 back in 
+        //remove _nomination_merged
         remove _nomination
       */
      
      fileName = fileName.replace(/^attachment_[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}_/, "");
      //fileName = fileName.replace(/^\d{5}-\d{2}_/, "");
-     fileName = fileName.replace(/_nomination_merged/, "");
+     //fileName = fileName.replace(/_nomination_merged/, "");
      fileName = fileName.replace(/_nomination/, "");
      
      //console.log(`Zipping ${file} as ${fileName}`);
@@ -120,7 +120,7 @@ const fileFilter = function (req, file, next) {
   }
 };
 
-const uploader = multer({ storage: storage, fileFilter: fileFilter });
+const uploader = multer({ storage: storage, fileFilter: fileFilter, limits: {fieldSize: 1024 * 1024 * 100, fileSize: 1024 * 1024 * 100} });
 exports.uploader = uploader.single("attached");
 
 /**
